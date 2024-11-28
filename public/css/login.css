@@ -1,0 +1,125 @@
+
+  /* General Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(to right, #e3f2fd, #fff); /* Soft blue gradient */
+    color: #333;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+  }
+  
+  h1 {
+    font-size: 36px;
+    font-weight: 700;
+    color: #2C3E50;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  
+  /* Form Styling */
+  form {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 30px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  label {
+    font-size: 16px;
+    color: #34495E;
+    margin-bottom: 8px;
+  }
+  
+  input {
+    font-size: 16px;
+    padding: 12px;
+    border: 1px solid #BDC3C7;
+    border-radius: 5px;
+    background-color: #f5f5f5;
+    transition: all 0.3s ease;
+  }
+  
+  input:focus {
+    outline: none;
+    border-color: #3498db;
+    background-color: #ffffff;
+    box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+  }
+  
+  button {
+    background-color: #3498db;
+    color: #ffffff;
+    font-size: 18px;
+    padding: 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  button:hover {
+    background-color: #2980b9;
+  }
+  
+  button:active {
+    transform: scale(0.98);
+  }
+  
+  a {
+    text-decoration: none;
+    color: #3498db;
+    text-align: center;
+    font-size: 16px;
+  }
+  
+  a:hover {
+    text-decoration: underline;
+  }
+  
+  p {
+    text-align: center;
+    font-size: 14px;
+    color: #7f8c8d;
+  }
+  
+  /* Button Style for Sign Up and Login */
+  .form-button-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 500px) {
+    body {
+      padding: 20px;
+    }
+  
+    h1 {
+      font-size: 28px;
+    }
+  
+    form {
+      width: 90%;
+      padding: 20px;
+    }
+  
+    button {
+      font-size: 16px;
+    }
+  }
+  

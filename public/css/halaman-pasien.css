@@ -1,0 +1,135 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    /* background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(0, 0, 0, 0.7)), url('/css/assets/download.png');
+    background-size: cover;
+    background-position: center;
+    color: #333;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    margin: 0; */
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 50px;
+    background-color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+header h1 {
+    display: flex;
+    font-size: 24px;
+    color: #2C3E50;
+}
+
+header nav {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+header nav a {
+    text-decoration: none;
+    color: #333;
+    font-size: 16px;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+header nav a:hover {
+    color: #007bff;
+}
+
+header .profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+header .profile img {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+}
+
+header .profile span {
+    font-size: 16px;
+    color: #333;
+}
+
+.hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 50px;
+    background: linear-gradient(to right, #e3f2fd, #ffffff);
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(0, 0, 0, 0.7)), url('/css/assets/download.png');
+}
+
+.hero-text {
+    max-width: 50%;
+    position: relative;
+    width: 800px;
+    height: 450px;
+    margin: 0;
+    overflow: hidden;
+}
+
+.hero-text h2 {
+    position: relative;
+    font-size: 36px;
+    color: #2C3E50;
+    margin-bottom: 20px;
+}
+
+.hero-text button {
+    position: relative;
+    display: inline-block;
+    background-color: #007bff;
+    color: #ffffff;
+    padding: 15px 25px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-right: 20px;
+    transition: background-color 0.3s ease;
+}
+
+.hero-text button:hover {
+    background-color: #0056b3;
+}
+
+.hero img {
+    position: relative;
+    -webkit-mask-image: linear-gradient(to left, transparent 0%, black 50%);
+    mask-image: linear-gradient(to left, transparent 0%, black 50%);
+    width: 800px;
+    height: 450px;
+    filter: grayscale(100%);
+    opacity: 0.8;
+}
+
+footer {
+    text-align: center;
+    padding: 20px;
+    background-color: #ffffff;
+    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+    margin-top: 50px;
+}
+
+footer p {
+    font-size: 14px;
+    color: #777;
+}
