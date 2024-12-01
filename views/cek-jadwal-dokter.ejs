@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cek Jadwal Dokter</title>
+  <link rel="stylesheet" href="/css/cek-jadwal-dokter.css">
+</head>
+<body>
+  <h2>Jadwal Dokter</h2>
+  <form method="GET" action="/cek-jadwal-dokter">
+    <label for="dokter">Pilih Dokter:</label>
+    <select name="dokterId" id="dokter" required>
+      <option value="">--Pilih Dokter--</option>
+      <% doctors.forEach(dokter => { %>
+        <option value="<%= dokter.idUser %>" <%= dokterId == dokter.idUser ? 'selected' : '' %>>
+          <%= dokter.namaUser %> - <%= dokter.spesialisasi %>
+        </option>
+      <% }) %>
+    </select>
+    <label for="hari">Pilih Hari:</label>
+    <select name="hari" id="hari" required>
+      <option value="">--Pilih Hari--</option>
+      <option value="Senin" <%= hari === 'Senin' ? 'selected' : '' %>>Senin</option>
+      <option value="Selasa" <%= hari === 'Selasa' ? 'selected' : '' %>>Selasa</option>
+      <option value="Rabu" <%= hari === 'Rabu' ? 'selected' : '' %>>Rabu</option>
+      <option value="Kamis" <%= hari === 'Kamis' ? 'selected' : '' %>>Kamis</option>
+      <option value="Jumat" <%= hari === 'Jumat' ? 'selected' : '' %>>Jumat</option>
+      <option value="Sabtu" <%= hari === 'Sabtu' ? 'selected' : '' %>>Sabtu</option>
+    </select>
+    <button type="submit">Cek Jadwal</button>
+  </form>
+
+  <% if (jadwal.length > 0) { %>
+    <h3>Slot Waktu Tersedia</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Slot Waktu</th>
+          <th>Status</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% jadwal.forEach(slot => { %>
+          <tr>
+            <td><%= slot.slotWaktu %></td>
+            <td><%= slot.status %></td>
+            <td>
+              <% if (slot.status === 'Tersedia') { %>
+                <form method="POST" action="/booking">
+                  <input type="hidden" name="jadwalId" value="<%= slot.idJadwal %>">
+                  <button type="submit">Booking</button>
+                </form>
+              <% } else { %>
+                <span>Sudah Dibooking</span>
+              <% } %>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } else { %>
+    <p>Tidak ada slot waktu yang tersedia untuk hari ini.</p>
+  <% } %>
+</body>
+</html>
