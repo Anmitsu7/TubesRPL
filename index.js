@@ -18,14 +18,15 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Session Configuration
 app.use(session({
-  secret: 'your_secret_key', // Replace with a strong, unique secret
+  secret: 'your_secret_key', // Ganti dengan secret yang kuat
   resave: false,
   saveUninitialized: false,
   cookie: { 
-    secure: false, // Set to true if using https
-    maxAge: 3600000 // 1 hour
+    secure: false, // Set ke true jika menggunakan https
+    maxAge: 3600000 // 1 jam
   }
 }));
+
 
 // Database Connection Pool
 const pool = mysql.createPool({
@@ -55,6 +56,7 @@ app.get('/', (req, res) => {
 });
 
 // Login Route
+// Route untuk menampilkan halaman login
 app.get('/login', (req, res) => {
   res.render('login', { message: null });
 });
@@ -92,7 +94,7 @@ app.post('/login', (req, res) => {
             email: user.email,
             role: user.role
           };
-          return res.redirect('/dashboard');
+          return res.redirect('/dashboard'); // Redirect to dashboard after login
         } else {
           // Password doesn't match
           return res.render('login', { message: 'Password salah!' });
@@ -108,7 +110,7 @@ app.post('/login', (req, res) => {
           email: user.email,
           role: user.role
         };
-        return res.redirect('/dashboard');
+        return res.redirect('/dashboard'); // Redirect to dashboard after login
       } else {
         // Password doesn't match
         return res.render('login', { message: 'Password salah!' });
@@ -117,15 +119,14 @@ app.post('/login', (req, res) => {
   });
 });
 
-
-app.get('/halaman-dokter', isAuthenticated, (req, res) => {
-  if (req.session.user.role === 'dokter') {
-    res.render('dokter-dashboard', { user: req.session.user });
-  } else {
-    res.status(403).send('Access Denied');
-  }
+// Dashboard Route
+app.get('/dashboard', isAuthenticated, (req, res) => {
+  const user = req.session.user;
+  if (!user) return res.redirect('/login');
+  res.render('dashboard', { user });
 });
 
+// Halaman Pasien
 app.get('/halaman-pasien', isAuthenticated, (req, res) => {
   if (req.session.user.role === 'pasien') {
     res.render('halaman-pasien', { user: req.session.user });
@@ -134,52 +135,108 @@ app.get('/halaman-pasien', isAuthenticated, (req, res) => {
   }
 });
 
+// Cek Jadwal Dokter Route
+app.get('/cek-jadwal-dokter', isAuthenticated, (req, res) => {
+  const { dokterId, hari } = req.query;
 
+  pool.query('SELECT * FROM user WHERE role = "dokter"', (err, doctors) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send('Error saat mengambil data dokter');
+    }
 
-// Signup Route
-app.get('/signup', (req, res) => {
-  res.render('signup');
+    if (dokterId && hari) {
+      const query = `
+        SELECT * 
+        FROM jadwal 
+        WHERE dokterId = ? AND hari = ? 
+      `;
+
+      pool.query(query, [dokterId, hari], (err, results) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).send('Server error saat mengambil jadwal dokter');
+        }
+
+        res.render('cek-jadwal-dokter', {
+          jadwal: results, // Semua slot waktu dari tabel `jadwal`
+          doctors,         // Daftar dokter
+          dokterId,        // Dokter yang dipilih
+          hari             // Hari yang dipilih
+        });
+      });
+    } else {
+      res.render('cek-jadwal-dokter', { doctors, jadwal: [], dokterId: null, hari: null });
+    }
+  });
 });
 
-app.post('/signup', (req, res) => {
-  const { namaUser, email, password, tanggalLahir, alamat, nomorTelepon } = req.body;
 
-  bcrypt.hash(password, 10, (err, hashedPassword) => {
-    if (err) return res.status(500).send('Server error');
+// Booking Route
+app.post('/booking', isAuthenticated, (req, res) => {
+  const { jadwalId } = req.body;
+  const pasienId = req.session.user.id;
 
-    const query = 'INSERT INTO user (namaUser, email, password, tanggalLahir, alamat, nomorTelepon, role) VALUES (?, ?, ?, ?, ?, ?, ?)';
-    
-    pool.query(query, [namaUser, email, hashedPassword, tanggalLahir, alamat, nomorTelepon, 'pasien'], (err) => {
-      if (err) return res.status(500).send('Registration failed');
-      
-      res.redirect('/login?alert=success');
+  // Periksa apakah slot waktu masih tersedia
+  pool.query('SELECT * FROM jadwal WHERE idJadwal = ? AND status = "Tersedia"', [jadwalId], (err, results) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send('Server error saat memproses booking');
+    }
+
+    if (results.length === 0) {
+      return res.status(400).send('Slot waktu sudah tidak tersedia');
+    }
+
+    // Update status slot waktu dan tambahkan ke tabel booking
+    const updateJadwalQuery = 'UPDATE jadwal SET status = "Booked" WHERE idJadwal = ?';
+    const insertBookingQuery = 'INSERT INTO booking (pasienId, jadwalId, tanggalBooking) VALUES (?, ?, NOW())';
+
+    pool.query(updateJadwalQuery, [jadwalId], (err) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).send('Error saat memperbarui jadwal');
+      }
+
+      pool.query(insertBookingQuery, [pasienId, jadwalId], (err) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).send('Error saat menyimpan data booking');
+        }
+
+        res.redirect('/cek-jadwal-dokter?message=success');
+      });
     });
   });
 });
 
-app.get('/login', (req, res) => {
-  const alert = req.query.alert === 'success' ? 'Pendaftaran berhasil!' : null;
-  res.render('login', { alert });
+// Riwayat Medis Route
+app.get('/riwayat-medis', isAuthenticated, (req, res) => {
+  const userId = req.session.user.id; // Mengambil ID pasien dari sesi
+
+  // Query untuk mengambil data riwayat medis pasien
+  pool.query(
+    'SELECT * FROM riwayat_medis WHERE idPasien = ? ORDER BY tanggal DESC',
+    [userId],
+    (err, results) => {
+      if (err) {
+        console.error('Error fetching medical history:', err);
+        return res.status(500).send('Server error');
+      }
+
+      res.render('riwayat-medis', {
+        user: req.session.user, // Data pengguna
+        riwayatMedis: results,  // Data riwayat medis
+      });
+    }
+  );
 });
 
-// Dashboard Route
-app.get('/dashboard', isAuthenticated, (req, res) => {
-  const user = req.session.user;
-  
-  if (!user) {
-    return res.redirect('/login');
-  }
-
-  console.log('User Role:', user.role);
-  res.render('dashboard', { user }); // Pass the user object to the EJS template
-});
 
 // Logout Route
 app.get('/logout', (req, res) => {
   req.session.destroy((err) => {
-    if (err) {
-      console.error('Logout error:', err);
-    }
+    if (err) console.error('Logout error:', err);
     res.redirect('/login');
   });
 });
@@ -188,5 +245,3 @@ app.get('/logout', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
-
-app.use(express.static('public'));
