@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - Poliklinik X</title>
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Selamat datang, <%= user.namaUser %></h2>
+        <p>Anda login sebagai <%= user.role %></p>
+
+        <div class="dashboard-links">
+            <% if (user.role === 'administrator') { %>
+                <a href="/halaman-admin">Masuk ke Dashboard Admin</a>
+            <% } else if (user.role === 'dokter') { %>
+                <a href="/halaman-dokter">Masuk ke Dashboard Dokter</a>
+            <% } else if (user.role === 'perawat') { %>
+                <a href="/halaman-perawat">Masuk ke Dashboard Perawat</a>
+            <% } else if (user.role === 'pasien') { %>
+                <a href="/halaman-pasien">Masuk ke Dashboard Pasien</a>
+            <% } else { %>
+                <p>Role tidak dikenali.</p>
+            <% } %>
+        </div>
+        
+        <a href="/logout" class="logout-link">Logout</a>
+    </div>
+</body>
+</html>

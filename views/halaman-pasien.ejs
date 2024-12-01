@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pasien - Home Page</title>
+    <link rel="stylesheet" href="/css/halaman-pasien.css">
+</head>
+<body>
+    <header>
+        <h1>Klinik SehatCare</h1>
+        <nav>
+            <a href="#">Hasil Diagnosa</a>
+            <a href="#">Dokter</a>
+            <a href="/logout">Log Out</a>
+            <div class="profile">
+                <img src="https://via.placeholder.com/30" alt="User Profile">
+                <span><%= user.namaUser %></span>
+            </div>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <div class="hero-text">
+            <h2>Selamat Datang di Klinik SehatCare</h2>
+            <p>Layanan kesehatan yang mudah, cepat, dan terpercaya untuk Anda.</p>
+            <button onclick="window.location.href='/cek-jadwal-dokter'">Cek Jadwal Dokter</button>
+            <button onclick="window.location.href='/pembayaran'">Pembayaran</button>
+        </div>
+        <!-- <img src="/css/assets/download.png" height="400px" width="300px" alt="Klinik Image"> -->
+    </section>
+
+    <footer>
+        <p>&copy; 2024 Klinik SehatCare. All rights reserved.</p>
+    </footer>
+</body>
+</html>
