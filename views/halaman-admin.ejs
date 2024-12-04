@@ -3,153 +3,178 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Home Page</title>
-    <link rel="stylesheet" href="/css/halaman-admin.css">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
-<style>
-    * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px 50px;
-    background-color: #ffffff;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-header h1 {
-    font-size: 24px;
-    color: #2C3E50;
-}
-
-header nav {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-}
-
-header nav a {
-    text-decoration: none;
-    color: #333;
-    font-size: 16px;
-    font-weight: 500;
-    transition: color 0.3s ease;
-}
-
-header nav a:hover {
-    color: #ffc107;
-}
-
-header .profile {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-header .profile img {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-}
-
-header .profile span {
-    font-size: 16px;
-    color: #333;
-}
-
-.hero {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 50px;
-    background: linear-gradient(to right, #fff3cd, #ffffff);
-}
-
-.hero-text {
-    max-width: 50%;
-}
-
-.hero-text h2 {
-    font-size: 36px;
-    color: #2C3E50;
-    margin-bottom: 20px;
-}
-
-.hero-text button {
-    background-color: #ffc107;
-    color: #ffffff;
-    padding: 15px 25px;
-    border: none;
-    border-radius: 5px;
-    font-size: 16px;
-    cursor: pointer;
-    margin-right: 20px;
-    transition: background-color 0.3s ease;
-}
-
-.hero-text button:hover {
-    background-color: #e0a800;
-}
-
-footer {
-    position: fixed;
-    text-align: center;
-    border: black;
-    bottom: 0;
-    width: 100%;
-    padding: 20px;
-    background-color: #ffffff;
-    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
-    margin-top: 50px;
-}
-
-footer p {
-    text-align: center;
-    padding: 10px 0;
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-    font-size: 14px;
-    color: #777;
-}
-
-</style>
 <body>
-    <header>
-        <h1>Klinik SehatCare</h1>
-        <nav>
-            <a href="/register-pasien">Registerasi Pasien</a>
-            <a href="/kelola-jadwal-dokter">Kelola Jadwal Dokter</a>
-            <a href="/konfirmasi-pembayaran">Konfirmasi Pembayaran</a>
-            <a href="/logout">Log Out</a>
-            <div class="profile">
-                <img src="https://via.placeholder.com/30" alt="Admin Profile">
-                <span><%= user.namaAdmin %></span>
-            </div>
-        </nav>
-    </header>
+    <div class="container-fluid">
+        <div class="row">
+            <nav class="col-md-2 d-md-block bg-light sidebar">
+                <div class="sidebar-sticky">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#jadwal">Jadwal Dokter & Perawat</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#pendaftaran">Pendaftaran Offline</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#transaksi">Transaksi Pasien</a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
 
-    <section class="hero">
-        <div class="hero-text">
-            <h2>Selamat Datang, Admin <%= user.namaAdmin %>!</h2>
-            <p>Kelola operasional klinik dengan mudah dan efisien.</p>
-            <br>
-            <button onclick="window.location.href='/kelola-jadwal-dokter'">Kelola Jadwal</button>
-            <button onclick="window.location.href='/konfirmasi-pembayaran'">Konfirmasi Pembayaran</button>
+            <main role="main" class="col-md-10 ml-sm-auto px-4">
+                <section id="jadwal">
+                    <h2>Manajemen Jadwal</h2>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h4>Tambah/Edit Jadwal</h4>
+                            <form action="/tambah-jadwal" method="POST">
+                                <div class="form-group">
+                                    <label>Pilih Tenaga Medis</label>
+                                    <select name="dokterId" class="form-control" required>
+                                        <% tenagaMedis.forEach(function(medis) { %>
+                                            <option value="<%= medis.idUser %>"><%= medis.namaUser %> - <%= medis.role %></option>
+                                        <% }); %>
+                                    </select>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group col-md-6">
+                                        <label>Hari</label>
+                                        <select name="hari" class="form-control" required>
+                                            <option value="Senin">Senin</option>
+                                            <option value="Selasa">Selasa</option>
+                                            <option value="Rabu">Rabu</option>
+                                            <option value="Kamis">Kamis</option>
+                                            <option value="Jumat">Jumat</option>
+                                            <option value="Sabtu">Sabtu</option>
+                                            <option value="Minggu">Minggu</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <label>Jam Kerja</label>
+                                        <div class="input-group">
+                                            <input type="time" name="jamMulai" class="form-control" required>
+                                            <div class="input-group-prepend input-group-append">
+                                                <span class="input-group-text">-</span>
+                                            </div>
+                                            <input type="time" name="jamSelesai" class="form-control" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group col-md-6">
+                                        <label>Kuota Online</label>
+                                        <input type="number" name="kuotaOnline" class="form-control" required>
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <label>Kuota Offline</label>
+                                        <input type="number" name="kuotaOffline" class="form-control" required>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Simpan Jadwal</button>
+                            </form>
+                        </div>
+                        <div class="col-md-6">
+                            <h4>Daftar Jadwal</h4>
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Nama</th>
+                                        <th>Hari</th>
+                                        <th>Jam</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% jadwal.forEach(function(item) { %>
+                                        <tr>
+                                            <td><%= item.namaUser %></td>
+                                            <td><%= item.hari %></td>
+                                            <td><%= item.jamMulai %> - <%= item.jamSelesai %></td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-warning">Edit</button>
+                                                    <button class="btn btn-sm btn-danger">Hapus</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <% }); %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="pendaftaran" class="mt-4">
+                    <h2>Pendaftaran Offline</h2>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Dokter</th>
+                                        <th>Sisa Kuota Offline</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% jadwal.forEach(function(item) { %>
+                                        <tr>
+                                            <td><%= item.namaUser %></td>
+                                            <td><%= item.sisaKuotaOffline %></td>
+                                            <td>
+                                                <form action="/update-kuota-offline" method="POST">
+                                                    <input type="hidden" name="jadwalId" value="<%= item.idJadwal %>">
+                                                    <div class="input-group">
+                                                        <input type="number" name="kuotaOffline" class="form-control" placeholder="Kurangi kuota">
+                                                        <div class="input-group-append">
+                                                            <button class="btn btn-primary" type="submit">Update</button>
+                                                        </div>
+                                                    </div>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    <% }); %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="transaksi" class="mt-4">
+                    <h2>Transaksi Pasien</h2>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Nama Pasien</th>
+                                <th>Dokter</th>
+                                <th>Tanggal</th>
+                                <th>Total Biaya</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% transaksi.forEach(function(item) { %>
+                                <tr>
+                                    <td><%= item.namaPasien %></td>
+                                    <td><%= item.namaDokter %></td>
+                                    <td><%= item.tanggal %></td>
+                                    <td>Rp <%= item.totalBiaya.toLocaleString() %></td>
+                                    <td><%= item.status %></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-info">Proses</button>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </section>
+            </main>
         </div>
-    </section>
-
-    <footer>
-        <p>&copy; 2024 Klinik SehatCare. All rights reserved.</p>
-    </footer>
+    </div>
 </body>
 </html>

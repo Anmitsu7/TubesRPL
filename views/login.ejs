@@ -1,28 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login</title>
-  <link rel="stylesheet" href="/css/login.css">
+  <title>Login - Klinik RPL</title>
+  <link rel="stylesheet" href="/css/auth.css">
 </head>
+
 <body>
-  <h1>Login</h1>
+  <div class="auth-container">
+    <h1>Login</h1>
 
-  <% if (locals.error) { %>
-    <div style="color: red; text-align: center; margin-bottom: 15px;">
-      <%= error %>
-    </div>
-  <% } %>
-  <form action="/login" method="POST">
-    <label for="email">Email:</label>
-    <input type="email" id="email" name="email" required>
-    
-    <label for="password">Password:</label>
-    <input type="password" id="password" name="password" required>
+    <% if (locals.message) { %>
+      <div id="popup" class="popup <%= locals.alertType === 'error' ? 'error' : '' %>">
+        <%= message %>
+      </div>
+      <% } %>
 
-    <button type="submit">Login</button>
-  </form>
-  <p>Belum punya akun? <a href="/signup">Daftar</a></p>
+        <form action="/login" method="POST">
+          <label for="email">Email:</label>
+          <input type="email" id="email" name="email" placeholder="Masukkan email Anda" required>
+
+          <label for="password">Password:</label>
+          <input type="password" id="password" name="password" placeholder="Masukkan password Anda" required>
+
+          <button type="submit">Login</button>
+        </form>
+
+        <p>Belum punya akun? <a href="/signup">Daftar Sekarang</a></p>
+  </div>
+
+  <script>
+    // Optional: Add client-side validation or other scripts
+    document.addEventListener('DOMContentLoaded', function () {
+      const popup = document.getElementById('popup');
+      if (popup) {
+        setTimeout(() => {
+          popup.style.display = 'none';
+        }, 5000);
+      }
+    });
+  </script>
 </body>
+
 </html>
