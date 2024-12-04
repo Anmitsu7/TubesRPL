@@ -1,44 +1,59 @@
-<DOCTYPE html>
-  <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up</title>
-    <link rel="stylesheet" href="/css/signup.css">
-  </head>
-  <body>
-    <div class="signup-container">
-      <h1>Daftar Akun Baru</h1>
-      <form action="/signup" method="POST" class="signup-form">
-        <div class="form-group">
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daftar - Klinik RPL</title>
+  <link rel="stylesheet" href="/css/auth.css">
+</head>
+
+<body>
+  <div class="auth-container">
+    <h1>Daftar Akun</h1>
+
+    <% if (locals.message) { %>
+      <div id="popup" class="popup <%= locals.alertType === 'error' ? 'error' : '' %>">
+        <%= message %>
+      </div>
+      <% } %>
+
+        <form action="/signup" method="POST">
           <label for="namaUser">Nama Lengkap:</label>
           <input type="text" id="namaUser" name="namaUser" placeholder="Masukkan nama lengkap" required>
-        </div>
-    <div class="form-group">
-      <label for="email">Email:</label>
-      <input type="email" id="email" name="email" placeholder="Masukkan alamat email" required>
-    </div>
-  
-    <div class="form-group">
-      <label for="password">Password:</label>
-      <input type="password" id="password" name="password" placeholder="Buat password" required>
-    </div>
-  
-    <div class="form-group">
-      <label for="tanggalLahir">Tanggal Lahir:</label>
-      <input type="date" id="tanggalLahir" name="tanggalLahir">
-    </div>
-  
-    <div class="form-group">
-      <label for="nomorTelepon">Nomor Telepon:</label>
-      <input type="tel" id="nomorTelepon" name="nomorTelepon" placeholder="Masukkan nomor telepon">
-    </div>
-  
-    <div class="form-group">
-      <label for="alamat">Alamat:</label>
-      <textarea id="alamat" name="alamat" placeholder="Masukkan alamat lengkap"></textarea>
-    </div>
-  
-    <button type="submit" class="signup-button">Daftar</button>
-  </form>
-  <p class="login-link">Sudah punya akun? <a href="/login">Login</a></p>
+
+          <label for="email">Email:</label>
+          <input type="email" id="email" name="email" placeholder="Masukkan email" required>
+
+          <label for="password">Password:</label>
+          <input type="password" id="password" name="password" placeholder="Buat password" required minlength="6">
+
+          <label for="tanggalLahir">Tanggal Lahir:</label>
+          <input type="date" id="tanggalLahir" name="tanggalLahir" required>
+
+          <label for="alamat">Alamat:</label>
+          <input type="text" id="alamat" name="alamat" placeholder="Masukkan alamat" required>
+
+          <label for="nomorTelepon">Nomor Telepon:</label>
+          <input type="tel" id="nomorTelepon" name="nomorTelepon" placeholder="Masukkan nomor telepon" required
+            pattern="[0-9]+">
+
+          <button type="submit">Daftar</button>
+        </form>
+
+        <p>Sudah punya akun? <a href="/login">Login</a></p>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const popup = document.getElementById('popup');
+      if (popup) {
+        setTimeout(() => {
+          popup.style.display = 'none';
+        }, 5000);
+      }
+    });
+  </script>
+</body>
+
+</html>
