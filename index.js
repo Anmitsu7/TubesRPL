@@ -245,3 +245,24 @@ app.get('/logout', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
+
+// Signup Route
+app.get('/signup', (req, res) => {
+  res.render('signup');
+});
+
+app.post('/signup', (req, res) => {
+  const { namaUser, email, password, tanggalLahir, alamat, nomorTelepon } = req.body;
+
+  bcrypt.hash(password, 10, (err, hashedPassword) => {
+    if (err) return res.status(500).send('Server error');
+
+    const query = 'INSERT INTO user (namaUser, email, password, tanggalLahir, alamat, nomorTelepon, role) VALUES (?, ?, ?, ?, ?, ?, ?)';
+    
+    pool.query(query, [namaUser, email, hashedPassword, tanggalLahir, alamat, nomorTelepon, 'pasien'], (err) => {
+      if (err) return res.status(500).send('Registration failed');
+      
+      res.redirect('/login?alert=success');
+    });
+  });
+});
