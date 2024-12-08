@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 28, 2024 at 01:38 PM
+-- Generation Time: Dec 08, 2024 at 05:53 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -24,74 +24,80 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
--- Table structure for table `jadwal`
+-- Table structure for table `booking`
 --
 
-CREATE TABLE `jadwal` (
-  `idJadwal` int(3) NOT NULL,
-  `hari` varchar(6) NOT NULL,
-  `waktu` time NOT NULL,
-  `idDokter` int(3) NOT NULL
+CREATE TABLE `booking` (
+  `idBooking` int(11) NOT NULL,
+  `pasienId` int(11) NOT NULL,
+  `jadwalId` int(11) NOT NULL,
+  `tanggalBooking` datetime NOT NULL,
+  `metodePendaftaran` enum('online','offline') NOT NULL DEFAULT 'online',
+  `status` enum('aktif','selesai','batal') NOT NULL DEFAULT 'aktif',
+  `nomorAntrian` varchar(10) DEFAULT NULL,
+  `statusAntrian` enum('menunggu','dipanggil','selesai') DEFAULT 'menunggu'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `jadwal`
+-- Dumping data for table `booking`
 --
 
-INSERT INTO `jadwal` (`idJadwal`, `hari`, `waktu`, `idDokter`) VALUES
-(1, 'Senin', '08:00:00', 1),
-(2, 'Selasa', '10:00:00', 2),
-(3, 'Rabu', '09:00:00', 6),
-(4, 'Kamis', '14:00:00', 1),
-(5, 'Jumat', '11:00:00', 2);
+INSERT INTO `booking` (`idBooking`, `pasienId`, `jadwalId`, `tanggalBooking`, `metodePendaftaran`, `status`, `nomorAntrian`, `statusAntrian`) VALUES
+(1, 4, 2, '2024-12-04 23:00:34', 'offline', 'aktif', NULL, 'menunggu'),
+(2, 4, 2, '2024-12-04 23:00:42', 'online', 'aktif', NULL, 'menunggu');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `kunjungandokter`
+-- Table structure for table `jadwal_dokter`
 --
 
-CREATE TABLE `kunjungandokter` (
-  `idKunjungan` int(3) NOT NULL,
-  `tanggal` date NOT NULL,
-  `idPasien` int(3) NOT NULL,
-  `idDokter` int(3) NOT NULL
+CREATE TABLE `jadwal_dokter` (
+  `idJadwal` int(11) NOT NULL,
+  `dokterId` int(11) NOT NULL,
+  `hari` enum('Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu') NOT NULL,
+  `jamMulai` time NOT NULL,
+  `jamSelesai` time NOT NULL,
+  `kuotaOnline` int(11) NOT NULL DEFAULT 0,
+  `kuotaOffline` int(11) NOT NULL DEFAULT 0,
+  `sisaKuotaOnline` int(11) NOT NULL DEFAULT 0,
+  `sisaKuotaOffline` int(11) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `kunjungandokter`
+-- Dumping data for table `jadwal_dokter`
 --
 
-INSERT INTO `kunjungandokter` (`idKunjungan`, `tanggal`, `idPasien`, `idDokter`) VALUES
-(1, '2024-11-01', 4, 1),
-(2, '2024-11-02', 4, 2),
-(3, '2024-11-03', 7, 6),
-(4, '2024-11-04', 4, 1),
-(5, '2024-11-05', 7, 2);
+INSERT INTO `jadwal_dokter` (`idJadwal`, `dokterId`, `hari`, `jamMulai`, `jamSelesai`, `kuotaOnline`, `kuotaOffline`, `sisaKuotaOnline`, `sisaKuotaOffline`) VALUES
+(2, 1, 'Senin', '08:00:00', '16:00:00', 10, 5, 9, 4),
+(3, 1, 'Rabu', '09:00:00', '17:00:00', 8, 7, 8, 7),
+(4, 1, 'Jumat', '10:00:00', '18:00:00', 12, 6, 12, 6),
+(5, 2, 'Selasa', '08:30:00', '16:30:00', 9, 6, 9, 6),
+(6, 2, 'Kamis', '09:30:00', '17:30:00', 7, 8, 7, 8),
+(7, 2, 'Sabtu', '07:00:00', '15:00:00', 11, 5, 11, 5);
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `riwayatmedis`
+-- Table structure for table `riwayat_medis`
 --
 
-CREATE TABLE `riwayatmedis` (
-  `idRiwayatMedis` int(3) NOT NULL,
-  `idPasien` int(3) NOT NULL,
-  `idPerawat` int(3) NOT NULL,
-  `idDokter` int(3) NOT NULL
+CREATE TABLE `riwayat_medis` (
+  `idRiwayatMedis` int(11) NOT NULL,
+  `idPasien` int(11) NOT NULL,
+  `tanggal` datetime NOT NULL,
+  `diagnosa` text DEFAULT NULL,
+  `resep` text DEFAULT NULL,
+  `catatan` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `riwayatmedis`
+-- Dumping data for table `riwayat_medis`
 --
 
-INSERT INTO `riwayatmedis` (`idRiwayatMedis`, `idPasien`, `idPerawat`, `idDokter`) VALUES
-(1, 4, 3, 1),
-(2, 7, 8, 6),
-(3, 4, 3, 2),
-(4, 7, 8, 2),
-(5, 4, 3, 1);
+INSERT INTO `riwayat_medis` (`idRiwayatMedis`, `idPasien`, `tanggal`, `diagnosa`, `resep`, `catatan`) VALUES
+(1, 3, '2024-01-15 10:30:00', 'Flu Ringan', 'Paracetamol, Vitamin C', 'Istirahat yang cukup'),
+(2, 3, '2024-02-20 14:45:00', 'Demam', 'Antibiotik, Obat Penurun Panas', 'Kontrol ulang dalam 3 hari');
 
 -- --------------------------------------------------------
 
@@ -100,23 +106,13 @@ INSERT INTO `riwayatmedis` (`idRiwayatMedis`, `idPasien`, `idPerawat`, `idDokter
 --
 
 CREATE TABLE `transaksi` (
-  `idTransaksi` int(3) NOT NULL,
-  `tanggal` date NOT NULL,
-  `status` tinyint(1) NOT NULL,
-  `idPasien` int(3) NOT NULL,
-  `idAdministrator` int(3) NOT NULL
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `pasienId` int(11) NOT NULL,
+  `dokterId` int(11) NOT NULL,
+  `tanggal` timestamp NOT NULL DEFAULT current_timestamp(),
+  `totalBiaya` decimal(10,2) NOT NULL,
+  `status` varchar(50) DEFAULT 'Pending'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `transaksi`
---
-
-INSERT INTO `transaksi` (`idTransaksi`, `tanggal`, `status`, `idPasien`, `idAdministrator`) VALUES
-(1, '2024-11-01', 1, 4, 5),
-(2, '2024-11-02', 0, 7, 5),
-(3, '2024-11-03', 1, 4, 5),
-(4, '2024-11-04', 0, 7, 5),
-(5, '2024-11-05', 1, 4, 5);
 
 -- --------------------------------------------------------
 
@@ -125,135 +121,133 @@ INSERT INTO `transaksi` (`idTransaksi`, `tanggal`, `status`, `idPasien`, `idAdmi
 --
 
 CREATE TABLE `user` (
-  `idUser` int(3) NOT NULL,
-  `namaUser` varchar(50) NOT NULL,
-  `tanggalLahir` date DEFAULT NULL,
-  `alamat` varchar(100) DEFAULT NULL,
-  `spesialis` varchar(50) DEFAULT NULL,
+  `idUser` int(11) NOT NULL,
+  `namaUser` varchar(100) NOT NULL,
   `email` varchar(100) NOT NULL,
   `password` varchar(255) NOT NULL,
-  `nomorTelepon` varchar(15) DEFAULT NULL,
-  `role` enum('dokter','perawat','pasien','administrator') NOT NULL
+  `tanggalLahir` date DEFAULT NULL,
+  `alamat` text DEFAULT NULL,
+  `nomorTelepon` varchar(20) DEFAULT NULL,
+  `role` enum('pasien','dokter','admin') DEFAULT 'pasien'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `user`
 --
 
-INSERT INTO `user` (`idUser`, `namaUser`, `tanggalLahir`, `alamat`, `spesialis`, `email`, `password`, `nomorTelepon`, `role`) VALUES
-(1, 'Dr. Andi', '1980-05-15', 'Jl. Sudirman No. 10', 'Dokter Umum', 'dokterandi@gmail.com', 'dokterandi', '081234567890', 'dokter'),
-(2, 'Dr. Siti', '1985-07-20', 'Jl. Merdeka No. 25', 'Dokter Anak', 'siti@example.com', 'hashedpassword234', '082345678901', 'dokter'),
-(3, 'Perawat Budi', '1990-03-10', 'Jl. Kemerdekaan No. 5', NULL, 'budi@example.com', 'hashedpassword345', '083456789012', 'perawat'),
-(4, 'Pasien Lisa', '2000-01-22', 'Jl. Harmoni No. 2', NULL, 'lisa@example.com', 'hashedpassword456', '084567890123', 'pasien'),
-(5, 'Administrator Tono', '1995-06-30', 'Jl. Sejahtera No. 15', NULL, 'tono@example.com', 'hashedpassword567', '085678901234', 'administrator'),
-(6, 'Dr. Maya', '1983-04-18', 'Jl. Pahlawan No. 12', 'Dokter Gigi', 'maya@example.com', 'hashedpassword678', '086789012345', 'dokter'),
-(7, 'Pasien Rian', '1998-09-11', 'Jl. Kartini No. 8', NULL, 'rian@example.com', 'hashedpassword789', '087890123456', 'pasien'),
-(8, 'Perawat Sari', '1992-11-15', 'Jl. Mangga No. 22', NULL, 'sari@example.com', 'hashedpassword890', '088901234567', 'perawat'),
-(9, 'bagas', NULL, NULL, NULL, 'maulanabagasfadhila@gmail.com', '$2a$10$6dUnaxNOKdo4YpKAMVx10.FU/toKovlQLvnuEEtmyaeYoY8cjwlNO', NULL, 'pasien'),
-(10, 'bagas', NULL, NULL, NULL, 'maulanabagasfadhila@gmail.com', '$2a$10$K1TMPnkoB7jxfh7MR4RTUuCP.HdUqHcz8DvrXchgm8CE8brIXE.g.', NULL, 'pasien'),
-(11, 'bagas', NULL, NULL, NULL, 'maulanabagasfadhila@gmail.com', '$2a$10$Eb/c8Xgimz6vEYJZU/PydeFuEZIVN1U76QASk6cCDMHtEBcZi88Ay', NULL, 'pasien');
+INSERT INTO `user` (`idUser`, `namaUser`, `email`, `password`, `tanggalLahir`, `alamat`, `nomorTelepon`, `role`) VALUES
+(1, 'Dr. John Doe', 'john.doe@klinik.com', '$2a$10$XYZ123', '1980-01-15', 'Jl. Dokter No. 10', '081234567890', 'dokter'),
+(2, 'Dr. Jane Smith', 'jane.smith@klinik.com', '$2a$10$ABC456', '1975-05-20', 'Jl. Dokter No. 20', '082345678901', 'dokter'),
+(3, 'Patient User', 'patient@example.com', '$2a$10$DEF789', '1990-10-10', 'Jl. Pasien No. 30', '083456789012', 'pasien'),
+(4, 'kensi', 'kensi@gmail.com', '$2a$10$op/82W3unuGPlwfG80K8UOWqiEYosXO7drWft.umiXZdXvxmQUiaC', '2003-04-30', 'pasko', '0822', 'pasien'),
+(5, 'admin', 'admin@gmail.com', 'admin', '2001-12-01', 'bukit jarian', '0812', 'admin'),
+(7, 'tes', 'tes@gmail.com', '$2a$10$WV4.2hB2Imw61zRlLjcZMeueuLJWpmPN36ggS84Js/rOB9bRrmLYW', '2001-01-01', 'bukitjarian', '0822', 'pasien'),
+(9, 'tes2', 'tes2@gmail.com', '$2a$10$A3gBZj8BzZnitwdcxzW6retxrdf0/paP0ZgJU7Rys01Qffd3zT47.', '2001-01-01', 'bukitjarian', '0822', 'pasien');
 
 --
 -- Indexes for dumped tables
 --
 
 --
--- Indexes for table `jadwal`
+-- Indexes for table `booking`
 --
-ALTER TABLE `jadwal`
+ALTER TABLE `booking`
+  ADD PRIMARY KEY (`idBooking`),
+  ADD KEY `pasienId` (`pasienId`),
+  ADD KEY `jadwalId` (`jadwalId`);
+
+--
+-- Indexes for table `jadwal_dokter`
+--
+ALTER TABLE `jadwal_dokter`
   ADD PRIMARY KEY (`idJadwal`),
-  ADD KEY `Jadwal_fkKeDokter` (`idDokter`);
+  ADD KEY `dokterId` (`dokterId`);
 
 --
--- Indexes for table `kunjungandokter`
+-- Indexes for table `riwayat_medis`
 --
-ALTER TABLE `kunjungandokter`
-  ADD PRIMARY KEY (`idKunjungan`),
-  ADD KEY `KunjunganDokter_fkKeDokter` (`idDokter`),
-  ADD KEY `KunjunganDokter_fkKePasien` (`idPasien`);
-
---
--- Indexes for table `riwayatmedis`
---
-ALTER TABLE `riwayatmedis`
+ALTER TABLE `riwayat_medis`
   ADD PRIMARY KEY (`idRiwayatMedis`),
-  ADD KEY `RiwayatMedis_fkKePasien` (`idPasien`),
-  ADD KEY `RiwayatMedis_fkKePerawat` (`idPerawat`),
-  ADD KEY `RiwayatMedis_fkKeDokter` (`idDokter`);
+  ADD KEY `idPasien` (`idPasien`);
 
 --
 -- Indexes for table `transaksi`
 --
 ALTER TABLE `transaksi`
-  ADD PRIMARY KEY (`idTransaksi`),
-  ADD KEY `Transaksi_fkKeAdministrator` (`idAdministrator`),
-  ADD KEY `Transaksi_fkKePasien` (`idPasien`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_transaksi_pasien` (`pasienId`),
+  ADD KEY `idx_transaksi_dokter` (`dokterId`);
 
 --
 -- Indexes for table `user`
 --
 ALTER TABLE `user`
-  ADD PRIMARY KEY (`idUser`);
+  ADD PRIMARY KEY (`idUser`),
+  ADD UNIQUE KEY `email` (`email`);
 
 --
 -- AUTO_INCREMENT for dumped tables
 --
 
 --
--- AUTO_INCREMENT for table `jadwal`
+-- AUTO_INCREMENT for table `booking`
 --
-ALTER TABLE `jadwal`
-  MODIFY `idJadwal` int(3) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+ALTER TABLE `booking`
+  MODIFY `idBooking` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
--- AUTO_INCREMENT for table `kunjungandokter`
+-- AUTO_INCREMENT for table `jadwal_dokter`
 --
-ALTER TABLE `kunjungandokter`
-  MODIFY `idKunjungan` int(3) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+ALTER TABLE `jadwal_dokter`
+  MODIFY `idJadwal` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
--- AUTO_INCREMENT for table `riwayatmedis`
+-- AUTO_INCREMENT for table `riwayat_medis`
 --
-ALTER TABLE `riwayatmedis`
-  MODIFY `idRiwayatMedis` int(3) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+ALTER TABLE `riwayat_medis`
+  MODIFY `idRiwayatMedis` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `transaksi`
 --
 ALTER TABLE `transaksi`
-  MODIFY `idTransaksi` int(3) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `user`
 --
 ALTER TABLE `user`
-  MODIFY `idUser` int(3) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `idUser` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- Constraints for dumped tables
 --
 
 --
--- Constraints for table `kunjungandokter`
+-- Constraints for table `booking`
 --
-ALTER TABLE `kunjungandokter`
-  ADD CONSTRAINT `KunjunganDokter_fkKeDokter` FOREIGN KEY (`idDokter`) REFERENCES `user` (`idUser`),
-  ADD CONSTRAINT `KunjunganDokter_fkKePasien` FOREIGN KEY (`idPasien`) REFERENCES `user` (`idUser`);
+ALTER TABLE `booking`
+  ADD CONSTRAINT `booking_ibfk_1` FOREIGN KEY (`pasienId`) REFERENCES `user` (`idUser`),
+  ADD CONSTRAINT `booking_ibfk_2` FOREIGN KEY (`jadwalId`) REFERENCES `jadwal_dokter` (`idJadwal`);
 
 --
--- Constraints for table `riwayatmedis`
+-- Constraints for table `jadwal_dokter`
 --
-ALTER TABLE `riwayatmedis`
-  ADD CONSTRAINT `RiwayatMedis_fkKeDokter` FOREIGN KEY (`idDokter`) REFERENCES `user` (`idUser`),
-  ADD CONSTRAINT `RiwayatMedis_fkKePasien` FOREIGN KEY (`idPasien`) REFERENCES `user` (`idUser`),
-  ADD CONSTRAINT `RiwayatMedis_fkKePerawat` FOREIGN KEY (`idPerawat`) REFERENCES `user` (`idUser`);
+ALTER TABLE `jadwal_dokter`
+  ADD CONSTRAINT `jadwal_dokter_ibfk_1` FOREIGN KEY (`dokterId`) REFERENCES `user` (`idUser`);
+
+--
+-- Constraints for table `riwayat_medis`
+--
+ALTER TABLE `riwayat_medis`
+  ADD CONSTRAINT `riwayat_medis_ibfk_1` FOREIGN KEY (`idPasien`) REFERENCES `user` (`idUser`);
 
 --
 -- Constraints for table `transaksi`
 --
 ALTER TABLE `transaksi`
-  ADD CONSTRAINT `Transaksi_fkKeAdministrator` FOREIGN KEY (`idAdministrator`) REFERENCES `user` (`idUser`),
-  ADD CONSTRAINT `Transaksi_fkKePasien` FOREIGN KEY (`idPasien`) REFERENCES `user` (`idUser`);
+  ADD CONSTRAINT `transaksi_ibfk_1` FOREIGN KEY (`pasienId`) REFERENCES `user` (`idUser`),
+  ADD CONSTRAINT `transaksi_ibfk_2` FOREIGN KEY (`dokterId`) REFERENCES `user` (`idUser`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

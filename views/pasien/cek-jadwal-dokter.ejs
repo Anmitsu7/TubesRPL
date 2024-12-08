@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cek Jadwal Dokter</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2 class="mb-4">Cek Jadwal Dokter</h2>
+
+        <form action="/cek-jadwal-dokter" method="GET" class="mb-4">
+            <div class="row">
+                <div class="col-md-4">
+                    <select name="dokterId" class="form-control" required>
+                        <option value="">Pilih Dokter</option>
+                        <% doctors.forEach(function(doctor) { %>
+                            <option value="<%= doctor.idUser %>" 
+                                <%= dokterId && dokterId == doctor.idUser ? 'selected' : '' %>>
+                                <%= doctor.namaUser %>
+                            </option>
+                        <% }); %>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <select name="hari" class="form-control" required>
+                        <option value="">Pilih Hari</option>
+                        <option value="Senin" <%= hari === 'Senin' ? 'selected' : '' %>>Senin</option>
+                        <option value="Selasa" <%= hari === 'Selasa' ? 'selected' : '' %>>Selasa</option>
+                        <option value="Rabu" <%= hari === 'Rabu' ? 'selected' : '' %>>Rabu</option>
+                        <option value="Kamis" <%= hari === 'Kamis' ? 'selected' : '' %>>Kamis</option>
+                        <option value="Jumat" <%= hari === 'Jumat' ? 'selected' : '' %>>Jumat</option>
+                        <option value="Sabtu" <%= hari === 'Sabtu' ? 'selected' : '' %>>Sabtu</option>
+                        <option value="Minggu" <%= hari === 'Minggu' ? 'selected' : '' %>>Minggu</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary">Cek Jadwal</button>
+                </div>
+            </div>
+        </form>
+
+        <% if (jadwal && jadwal.length > 0) { %>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Dokter</th>
+                            <th>Hari</th>
+                            <th>Jam Mulai</th>
+                            <th>Jam Selesai</th>
+                            <th>Kuota Online</th>
+                            <th>Kuota Offline</th>
+                            <th>Sisa Kuota Online</th>
+                            <th>Sisa Kuota Offline</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% jadwal.forEach(function(item) { %>
+                            <tr>
+                                <td><%= item.namaUser %></td>
+                                <td><%= item.hari %></td>
+                                <td><%= item.jamMulai %></td>
+                                <td><%= item.jamSelesai %></td>
+                                <td><%= item.kuotaOnline %></td>
+                                <td><%= item.kuotaOffline %></td>
+                                <td><%= item.sisaKuotaOnline %></td>
+                                <td><%= item.sisaKuotaOffline %></td>
+                                <td>
+                                    <form action="/booking" method="POST">
+                                        <input type="hidden" name="jadwalId" value="<%= item.idJadwal %>">
+                                        <button type="submit" name="metodePendaftaran" value="online" 
+                                                class="btn btn-primary btn-sm <%= item.sisaKuotaOnline <= 0 ? 'disabled' : '' %>">
+                                            Daftar Online
+                                        </button>
+                                        <div class="text-muted small mt-1">
+                                            Pendaftaran offline hubungi klinik
+                                        </div>
+                                    </form>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        <% } %>
+    </div>
+</body>
+</html>

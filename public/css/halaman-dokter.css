@@ -1,12 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dokter - Home Page</title>
-    <link rel="stylesheet" href="public/css/halaman-dokter.css">
-    <style>
-        * {
+* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -120,35 +112,3 @@ footer p {
     font-size: 14px;
     color: #777;
 }
-
-    </style>
-</head>
-<body>
-    <header>
-        <h1>Klinik SehatCare</h1>
-        <nav>
-            <a href="/diagnosa">Hasil Diagnosa</a>
-            <a href="/catat-obat">Catat Obat</a>
-            <a href="/logout">Log Out</a>
-            <div class="profile">
-                <img src="https://via.placeholder.com/30" alt="Dokter Profile">
-                <span><%= user.namaDokter %></span>
-            </div>
-        </nav>
-    </header>
-
-    <section class="hero">
-        <div class="hero-text">
-            <h2>Selamat Datang, Dokter <%= user.namaDokter %>!</h2>
-            <p>Berikan layanan kesehatan terbaik untuk pasien Anda.</p>
-            <br>
-            <button onclick="window.location.href='/lihat-jadwal-pasien'">Lihat Jadwal Pasien</button>
-            <button onclick="window.location.href='/hasil-diagnosa'">Kelola Diagnosa</button>
-        </div>
-    </section>
-
-    <footer>
-        <p>&copy; 2024 Klinik SehatCare. All rights reserved.</p>
-    </footer>
-</body>
-</html>
