@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 04, 2024 at 04:13 PM
+-- Generation Time: Dec 08, 2024 at 05:53 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -33,8 +33,18 @@ CREATE TABLE `booking` (
   `jadwalId` int(11) NOT NULL,
   `tanggalBooking` datetime NOT NULL,
   `metodePendaftaran` enum('online','offline') NOT NULL DEFAULT 'online',
-  `status` enum('aktif','selesai','batal') NOT NULL DEFAULT 'aktif'
+  `status` enum('aktif','selesai','batal') NOT NULL DEFAULT 'aktif',
+  `nomorAntrian` varchar(10) DEFAULT NULL,
+  `statusAntrian` enum('menunggu','dipanggil','selesai') DEFAULT 'menunggu'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `booking`
+--
+
+INSERT INTO `booking` (`idBooking`, `pasienId`, `jadwalId`, `tanggalBooking`, `metodePendaftaran`, `status`, `nomorAntrian`, `statusAntrian`) VALUES
+(1, 4, 2, '2024-12-04 23:00:34', 'offline', 'aktif', NULL, 'menunggu'),
+(2, 4, 2, '2024-12-04 23:00:42', 'online', 'aktif', NULL, 'menunggu');
 
 -- --------------------------------------------------------
 
@@ -59,7 +69,7 @@ CREATE TABLE `jadwal_dokter` (
 --
 
 INSERT INTO `jadwal_dokter` (`idJadwal`, `dokterId`, `hari`, `jamMulai`, `jamSelesai`, `kuotaOnline`, `kuotaOffline`, `sisaKuotaOnline`, `sisaKuotaOffline`) VALUES
-(2, 1, 'Senin', '08:00:00', '16:00:00', 10, 5, 10, 5),
+(2, 1, 'Senin', '08:00:00', '16:00:00', 10, 5, 9, 4),
 (3, 1, 'Rabu', '09:00:00', '17:00:00', 8, 7, 8, 7),
 (4, 1, 'Jumat', '10:00:00', '18:00:00', 12, 6, 12, 6),
 (5, 2, 'Selasa', '08:30:00', '16:30:00', 9, 6, 9, 6),
@@ -92,6 +102,21 @@ INSERT INTO `riwayat_medis` (`idRiwayatMedis`, `idPasien`, `tanggal`, `diagnosa`
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `transaksi`
+--
+
+CREATE TABLE `transaksi` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `pasienId` int(11) NOT NULL,
+  `dokterId` int(11) NOT NULL,
+  `tanggal` timestamp NOT NULL DEFAULT current_timestamp(),
+  `totalBiaya` decimal(10,2) NOT NULL,
+  `status` varchar(50) DEFAULT 'Pending'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `user`
 --
 
@@ -115,6 +140,7 @@ INSERT INTO `user` (`idUser`, `namaUser`, `email`, `password`, `tanggalLahir`, `
 (2, 'Dr. Jane Smith', 'jane.smith@klinik.com', '$2a$10$ABC456', '1975-05-20', 'Jl. Dokter No. 20', '082345678901', 'dokter'),
 (3, 'Patient User', 'patient@example.com', '$2a$10$DEF789', '1990-10-10', 'Jl. Pasien No. 30', '083456789012', 'pasien'),
 (4, 'kensi', 'kensi@gmail.com', '$2a$10$op/82W3unuGPlwfG80K8UOWqiEYosXO7drWft.umiXZdXvxmQUiaC', '2003-04-30', 'pasko', '0822', 'pasien'),
+(5, 'admin', 'admin@gmail.com', 'admin', '2001-12-01', 'bukit jarian', '0812', 'admin'),
 (7, 'tes', 'tes@gmail.com', '$2a$10$WV4.2hB2Imw61zRlLjcZMeueuLJWpmPN36ggS84Js/rOB9bRrmLYW', '2001-01-01', 'bukitjarian', '0822', 'pasien'),
 (9, 'tes2', 'tes2@gmail.com', '$2a$10$A3gBZj8BzZnitwdcxzW6retxrdf0/paP0ZgJU7Rys01Qffd3zT47.', '2001-01-01', 'bukitjarian', '0822', 'pasien');
 
@@ -145,6 +171,14 @@ ALTER TABLE `riwayat_medis`
   ADD KEY `idPasien` (`idPasien`);
 
 --
+-- Indexes for table `transaksi`
+--
+ALTER TABLE `transaksi`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_transaksi_pasien` (`pasienId`),
+  ADD KEY `idx_transaksi_dokter` (`dokterId`);
+
+--
 -- Indexes for table `user`
 --
 ALTER TABLE `user`
@@ -159,7 +193,7 @@ ALTER TABLE `user`
 -- AUTO_INCREMENT for table `booking`
 --
 ALTER TABLE `booking`
-  MODIFY `idBooking` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `idBooking` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `jadwal_dokter`
@@ -172,6 +206,12 @@ ALTER TABLE `jadwal_dokter`
 --
 ALTER TABLE `riwayat_medis`
   MODIFY `idRiwayatMedis` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `transaksi`
+--
+ALTER TABLE `transaksi`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `user`
@@ -201,6 +241,13 @@ ALTER TABLE `jadwal_dokter`
 --
 ALTER TABLE `riwayat_medis`
   ADD CONSTRAINT `riwayat_medis_ibfk_1` FOREIGN KEY (`idPasien`) REFERENCES `user` (`idUser`);
+
+--
+-- Constraints for table `transaksi`
+--
+ALTER TABLE `transaksi`
+  ADD CONSTRAINT `transaksi_ibfk_1` FOREIGN KEY (`pasienId`) REFERENCES `user` (`idUser`),
+  ADD CONSTRAINT `transaksi_ibfk_2` FOREIGN KEY (`dokterId`) REFERENCES `user` (`idUser`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

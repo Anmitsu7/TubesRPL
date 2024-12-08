@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Kelola Jadwal Dokter - Admin</title>
+    <%- include('../partials/header') %>
+</head>
+<body>
+    <%- include('../partials/sidebar', { user: user }) %>
+    
+    <div class="main-content">
+        <div class="container-fluid">
+            <h1 class="my-4">Manajemen Jadwal Dokter</h1>
+            
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#tambahJadwalModal">
+                        Tambah Jadwal Baru
+                    </button>
+                </div>
+            </div>
+
+            <div class="card shadow">
+                <div class="card-body">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Dokter</th>
+                                <th>Hari</th>
+                                <th>Jam Mulai</th>
+                                <th>Jam Selesai</th>
+                                <th>Kuota Online</th>
+                                <th>Kuota Offline</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% schedules.forEach(function(schedule) { %>
+                            <tr>
+                                <td><%= schedule.namaUser %></td>
+                                <td><%= schedule.hari %></td>
+                                <td><%= schedule.jamMulai %></td>
+                                <td><%= schedule.jamSelesai %></td>
+                                <td><%= schedule.kuotaOnline %> (Sisa: <%= schedule.sisaKuotaOnline %>)</td>
+                                <td><%= schedule.kuotaOffline %> (Sisa: <%= schedule.sisaKuotaOffline %>)</td>
+                                <td>
+                                    <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#updateJadwalModal-<%= schedule.idJadwal %>">
+                                        Edit
+                                    </button>
+                                </td>
+                            </tr>
+
+                            <!-- Update Modal for each schedule -->
+                            <div class="modal fade" id="updateJadwalModal-<%= schedule.idJadwal %>" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Update Jadwal Dokter</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <form action="/admin/update-jadwal" method="POST">
+                                            <div class="modal-body">
+                                                <input type="hidden" name="idJadwal" value="<%= schedule.idJadwal %>">
+                                                
+                                                <div class="mb-3">
+                                                    <label>Jam Mulai</label>
+                                                    <input type="time" name="jamMulai" class="form-control" value="<%= schedule.jamMulai %>" required>
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label>Jam Selesai</label>
+                                                    <input type="time" name="jamSelesai" class="form-control" value="<%= schedule.jamSelesai %>" required>
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label>Kuota Online</label>
+                                                    <input type="number" name="kuotaOnline" class="form-control" value="<%= schedule.kuotaOnline %>" required>
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label>Kuota Offline</label>
+                                                    <input type="number" name="kuotaOffline" class="form-control" value="<%= schedule.kuotaOffline %>" required>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                                <button type="submit" class="btn btn-primary">Update Jadwal</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            <% }); %>
+                        </tbody>
+                    </table>
+
+                    <!-- Tambah Jadwal Modal -->
+                    <div class="modal fade" id="tambahJadwalModal" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Tambah Jadwal Dokter</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <form action="/admin/tambah-jadwal" method="POST">
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label>Dokter</label>
+                                            <select name="dokterId" class="form-control" required>
+                                                <% doctors.forEach(function(doctor) { %>
+                                                <option value="<%= doctor.idUser %>"><%= doctor.namaUser %></option>
+                                                <% }); %>
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label>Hari</label>
+                                            <select name="hari" class="form-control" required>
+                                                <option value="Senin">Senin</option>
+                                                <option value="Selasa">Selasa</option>
+                                                <option value="Rabu">Rabu</option>
+                                                <option value="Kamis">Kamis</option>
+                                                <option value="Jumat">Jumat</option>
+                                                <option value="Sabtu">Sabtu</option>
+                                                <option value="Minggu">Minggu</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label>Jam Mulai</label>
+                                            <input type="time" name="jamMulai" class="form-control" required>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label>Jam Selesai</label>
+                                            <input type="time" name="jamSelesai" class="form-control" required>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label>Kuota Online</label>
+                                            <input type="number" name="kuotaOnline" class="form-control" required>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label>Kuota Offline</label>
+                                            <input type="number" name="kuotaOffline" class="form-control" required>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                        <button type="submit" class="btn btn-primary">Tambah Jadwal</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>
+</body>
+</html>
