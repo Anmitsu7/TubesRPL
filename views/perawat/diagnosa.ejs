@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnosa - Klinik SehatCare</title>
+    <link rel="stylesheet" href="public/css/halaman-diagnosa.css">
+</head>
+<body>
+    <header>
+        <h1>Klinik SehatCare</h1>
+        <nav>
+            <a href="/halaman-dokter">Halaman Dokter</a>
+            <a href="/catat-obat">Catat Obat</a>
+            <a href="/logout">Log Out</a>
+        </nav>
+    </header>
+
+    <section>
+        <h2>Hasil Diagnosa Hari Ini</h2>
+        <% if (diagnosaList.length === 0) { %>
+            <p>Belum ada diagnosa untuk hari ini.</p>
+        <% } else { %>
+            <table>
+                <tr>
+                    <th>Nama Pasien</th>
+                    <th>Hasil Diagnosa</th>
+                    <th>Tanggal Diagnosa</th>
+                </tr>
+                <% diagnosaList.forEach(function(diagnosa) { %>
+                    <tr>
+                        <td><%= diagnosa.pasien %></td>
+                        <td><%= diagnosa.hasilDiagnosa %></td>
+                        <td><%= diagnosa.tanggalDiagnosa %></td>
+                    </tr>
+                <% }); %>
+            </table>
+        <% } %>
+    </section>
+
+    <footer>
+        <p>&copy; 2024 Klinik SehatCare. All rights reserved.</p>
+    </footer>
+</body>
+</html>
