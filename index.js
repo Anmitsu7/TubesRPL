@@ -582,6 +582,63 @@ app.post('/admin/proses-transaksi', isAuthenticated, (req, res) => {
     res.redirect('/admin/transaksi');
   });
 });
+// Route untuk halaman dokter
+app.get('/halaman-dokter', (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/login'); // Arahkan ke halaman login jika belum login
+  }
+
+  const dokterId = req.session.user.idUser; // Ambil ID dokter dari session, pastikan idUser sesuai dengan kolom di tabel user
+
+  // Query untuk mendapatkan data dokter dari tabel user
+  const queryDokter = 'SELECT namaUser as namaDokter, role FROM user WHERE idUser = ? AND role = "dokter"';
+
+  // Query untuk mendapatkan pasien yang dijadwalkan dengan dokter ini hari ini
+  const queryPasien = `
+    SELECT u.namaUser as pasien, b.tanggalBooking, b.metodePendaftaran, b.status, b.nomorAntrian, b.statusAntrian 
+    FROM booking b
+    JOIN user u ON b.pasienId = u.idUser
+    WHERE b.jadwalId IN (
+      SELECT idJadwal FROM jadwal_dokter WHERE dokterId = ?
+    ) AND DATE(b.tanggalBooking) = CURDATE() AND b.status = 'aktif'
+  `;
+
+  // Query untuk mendapatkan jadwal dokter
+  const queryJadwal = 'SELECT hari, jamMulai, jamSelesai FROM jadwal_dokter WHERE dokterId = ?';
+
+  // Query data dokter
+  pool.query(queryDokter, [dokterId], (err, dokterResult) => {
+    if (err) {
+      return res.status(500).send('Database error: ' + err.message);
+    }
+
+    if (dokterResult.length === 0) {
+      return res.status(404).send('Dokter tidak ditemukan');
+    }
+
+    // Query data pasien
+    pool.query(queryPasien, [dokterId], (err, pasienResult) => {
+      if (err) {
+        return res.status(500).send('Database error: ' + err.message);
+      }
+
+      // Query jadwal dokter
+      pool.query(queryJadwal, [dokterId], (err, jadwalResult) => {
+        if (err) {
+          return res.status(500).send('Database error: ' + err.message);
+        }
+
+        // Kirim data ke template halaman-dokter.ejs
+        res.render('halaman-dokter', {
+          user: req.session.user, // Kirim data user (dokter) ke halaman EJS
+          daftarPasien: pasienResult,
+          jadwal: jadwalResult
+        });
+      });
+    });
+  });
+});
+
 //-------------------------------------------------------------------------------------------------
 
 // Start server
