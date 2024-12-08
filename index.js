@@ -638,6 +638,63 @@ app.get('/halaman-dokter', (req, res) => {
     });
   });
 });
+// Route untuk halaman catat obat
+app.get('/catat-obat', (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/login'); // Arahkan ke halaman login jika belum login
+  }
+
+  const perawatId = req.session.user.idUser; // Ambil ID perawat dari session
+
+  // Query untuk mendapatkan daftar pasien yang sudah diperiksa oleh perawat
+  const queryPasien = `
+    SELECT p.namaUser as pasien, b.tanggalBooking, b.metodePendaftaran, b.status, b.nomorAntrian, b.statusAntrian
+    FROM booking b
+    JOIN user p ON b.pasienId = p.idUser
+    WHERE b.perawatId = ? AND DATE(b.tanggalBooking) = CURDATE() AND b.status = 'aktif'
+  `;
+
+  pool.query(queryPasien, [perawatId], (err, pasienResult) => {
+    if (err) {
+      return res.status(500).send('Database error: ' + err.message);
+    }
+
+    // Kirim data ke template halaman-catat-obat.ejs
+    res.render('halaman-catat-obat', {
+      user: req.session.user, // Kirim data user (perawat) ke halaman EJS
+      daftarPasien: pasienResult
+    });
+  });
+});
+// Route untuk halaman diagnosa
+app.get('/diagnosa', (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/login'); // Arahkan ke halaman login jika belum login
+  }
+
+  const dokterId = req.session.user.idUser; // Ambil ID dokter dari session
+
+  // Query untuk mendapatkan hasil diagnosa pasien
+  const queryDiagnosa = `
+    SELECT p.namaUser as pasien, d.hasilDiagnosa, d.tanggalDiagnosa
+    FROM diagnosa d
+    JOIN user p ON d.pasienId = p.idUser
+    WHERE d.dokterId = ? AND DATE(d.tanggalDiagnosa) = CURDATE()
+  `;
+
+  // Query untuk mendapatkan daftar pasien yang sudah diperiksa oleh dokter hari ini
+  pool.query(queryDiagnosa, [dokterId], (err, diagnosaResult) => {
+    if (err) {
+      return res.status(500).send('Database error: ' + err.message);
+    }
+
+    // Kirim data ke template halaman-diagnosa.ejs
+    res.render('halaman-diagnosa', {
+      user: req.session.user, // Kirim data user (dokter) ke halaman EJS
+      diagnosaList: diagnosaResult
+    });
+  });
+});
 
 //-------------------------------------------------------------------------------------------------
 
