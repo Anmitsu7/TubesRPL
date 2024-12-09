@@ -18,42 +18,64 @@
       </div>
       <% } %>
 
-        <form action="/signup" method="POST">
+        <form action="/signup" method="POST" onsubmit="return validateForm()">
           <label for="namaUser">Nama Lengkap:</label>
-          <input type="text" id="namaUser" name="namaUser" placeholder="Masukkan nama lengkap" required>
+          <input type="text" id="namaUser" name="namaUser" placeholder="Masukkan nama lengkap"
+            value="<%= locals.formData && formData.namaUser ? formData.namaUser : '' %>" required>
 
           <label for="email">Email:</label>
-          <input type="email" id="email" name="email" placeholder="Masukkan email" required>
+          <input type="email" id="email" name="email" placeholder="Masukkan email"
+            value="<%= locals.formData && formData.email ? formData.email : '' %>" required>
 
           <label for="password">Password:</label>
           <input type="password" id="password" name="password" placeholder="Buat password" required minlength="6">
 
+          <label for="confirmPassword">Konfirmasi Password:</label>
+          <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Ulangi password" required>
+          <span id="passwordError" style="color: red;">
+            <%= locals.message && alertType==='error' ? message : '' %>
+          </span>
+
           <label for="tanggalLahir">Tanggal Lahir:</label>
-          <input type="date" id="tanggalLahir" name="tanggalLahir" required>
+          <input type="date" id="tanggalLahir" name="tanggalLahir"
+            value="<%= locals.formData && formData.tanggalLahir ? formData.tanggalLahir : '' %>" required>
 
           <label for="alamat">Alamat:</label>
-          <input type="text" id="alamat" name="alamat" placeholder="Masukkan alamat" required>
+          <input type="text" id="alamat" name="alamat" placeholder="Masukkan alamat"
+            value="<%= locals.formData && formData.alamat ? formData.alamat : '' %>" required>
 
           <label for="nomorTelepon">Nomor Telepon:</label>
-          <input type="tel" id="nomorTelepon" name="nomorTelepon" placeholder="Masukkan nomor telepon" required
+          <input type="tel" id="nomorTelepon" name="nomorTelepon" placeholder="Masukkan nomor telepon"
+            value="<%= locals.formData && formData.nomorTelepon ? formData.nomorTelepon : '' %>" required
             pattern="[0-9]+">
 
           <button type="submit">Daftar</button>
         </form>
 
-        <p>Sudah punya akun? <a href="/login">Login</a></p>
-  </div>
+        <script>
+          function validateForm() {
+            const password = document.getElementById('password');
+            const confirmPassword = document.getElementById('confirmPassword');
+            const passwordError = document.getElementById('passwordError');
 
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      const popup = document.getElementById('popup');
-      if (popup) {
-        setTimeout(() => {
-          popup.style.display = 'none';
-        }, 5000);
-      }
-    });
-  </script>
+            // Reset error message
+            passwordError.textContent = '';
+
+            // Cek panjang password
+            if (password.value.length < 6) {
+              passwordError.textContent = 'Password minimal 6 karakter';
+              return false;
+            }
+
+            // Cek kesesuaian password
+            if (password.value !== confirmPassword.value) {
+              passwordError.textContent = 'Password tidak cocok';
+              return false;
+            }
+
+            return true;
+          }
+        </script>
 </body>
 
 </html>

@@ -134,13 +134,34 @@ app.get('/signup', (req, res) => {
 
 // Route untuk memproses signup
 app.post('/signup', (req, res) => {
-  const { namaUser, email, password, tanggalLahir, alamat, nomorTelepon } = req.body;
+  const { namaUser, email, password, confirmPassword, tanggalLahir, alamat, nomorTelepon } = req.body;
 
+  // Validasi server-side
+  if (password.length < 6) {
+    return res.render('signup', {
+      message: 'Password minimal 6 karakter',
+      alertType: 'error',
+      // Kembalikan data form sebelumnya agar tidak perlu diisi ulang
+      formData: { namaUser, email, tanggalLahir, alamat, nomorTelepon }
+    });
+  }
+
+  // Cek konfirmasi password
+  if (password !== confirmPassword) {
+    return res.render('signup', {
+      message: 'Konfirmasi password tidak cocok',
+      alertType: 'error',
+      formData: { namaUser, email, tanggalLahir, alamat, nomorTelepon }
+    });
+  }
+
+  // Lanjutkan proses hash password
   bcrypt.hash(password, 10, (err, hashedPassword) => {
     if (err) {
       return res.render('signup', {
         message: 'Terjadi kesalahan saat mendaftar',
-        alertType: 'error'
+        alertType: 'error',
+        formData: { namaUser, email, tanggalLahir, alamat, nomorTelepon }
       });
     }
 
@@ -150,7 +171,8 @@ app.post('/signup', (req, res) => {
       if (err) {
         return res.render('signup', {
           message: 'Email sudah terdaftar atau terjadi kesalahan',
-          alertType: 'error'
+          alertType: 'error',
+          formData: { namaUser, email, tanggalLahir, alamat, nomorTelepon }
         });
       }
 
@@ -175,7 +197,7 @@ app.get('/logout', (req, res) => {
 //rute pasien
 app.get('/halaman-pasien', isAuthenticated, (req, res) => {
   if (req.session.user.role === 'pasien') {
-    res.render('halaman-pasien', { user: req.session.user });
+    res.render('pasien/halaman-pasien', { user: req.session.user });
   } else {
     res.redirect('/dashboard');
   }
@@ -805,7 +827,7 @@ app.get('/diagnosa', (req, res) => {
     }
 
     // Kirim data ke template halaman-diagnosa.ejs
-    res.render('halaman-diagnosa', {
+    res.render('perawat/halaman-diagnosa', {
       user: req.session.user, // Kirim data user (dokter) ke halaman EJS
       diagnosaList: diagnosaResult
     });
