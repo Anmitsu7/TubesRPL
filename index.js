@@ -77,48 +77,54 @@ app.post('/login', (req, res) => {
     const user = results[0];
     const storedPassword = user.password;
 
-    // Check if the stored password is hashed (assuming bcrypt hash starts with $2)
-    if (storedPassword.startsWith('$2')) {
-      // Password is hashed, use bcrypt.compare
-      bcrypt.compare(password, storedPassword, (err, isMatch) => {
-        if (err) {
-          console.error(err);
-          return res.status(500).send('Server error');
-        }
+    // Fungsi validasi password
+    const validatePassword = (inputPassword) => {
+      // Jika password di-hash
+      if (storedPassword.startsWith('$2')) {
+        return new Promise((resolve, reject) => {
+          bcrypt.compare(inputPassword, storedPassword, (err, isMatch) => {
+            if (err) reject(err);
+            resolve(isMatch);
+          });
+        });
+      }
+      
+      // Jika password plain text
+      return Promise.resolve(inputPassword === storedPassword);
+    };
 
+    validatePassword(password)
+      .then(isMatch => {
         if (isMatch) {
-          // Password matches
+          // Simpan sesi dengan benar
           req.session.user = {
-            id: user.idUser,
+            idUser: user.idUser,  // Gunakan idUser, bukan id
             namaUser: user.namaUser,
             email: user.email,
             role: user.role
           };
-          return res.redirect('/dashboard'); // Redirect to dashboard after login
+
+          // Redirect berdasarkan role
+          switch(user.role) {
+            case 'dokter':
+              return res.redirect('/halaman-dokter');
+            case 'admin':
+              return res.redirect('/halaman-admin');
+            case 'pasien':
+              return res.redirect('/halaman-pasien');
+            default:
+              return res.redirect('/dashboard');
+          }
         } else {
-          // Password doesn't match
           return res.render('login', { message: 'Password salah!' });
         }
+      })
+      .catch(err => {
+        console.error(err);
+        return res.status(500).send('Server error');
       });
-    } else {
-      // Password is in plaintext, use direct comparison
-      if (password === storedPassword) {
-        // Password matches
-        req.session.user = {
-          id: user.idUser,
-          namaUser: user.namaUser,
-          email: user.email,
-          role: user.role
-        };
-        return res.redirect('/dashboard'); // Redirect to dashboard after login
-      } else {
-        // Password doesn't match
-        return res.render('login', { message: 'Password salah!' });
-      }
-    }
   });
 });
-
 // Dashboard Route
 app.get('/dashboard', isAuthenticated, (req, res) => {
   const user = req.session.user;
@@ -720,61 +726,130 @@ app.post('/admin/proses-transaksi', isAuthenticated, (req, res) => {
     res.redirect('/admin/transaksi');
   });
 });
-// Route untuk halaman dokter
-app.get('/halaman-dokter', (req, res) => {
-  if (!req.session.user) {
-    return res.redirect('/login'); // Arahkan ke halaman login jika belum login
-  }
-
-  const dokterId = req.session.user.idUser; // Ambil ID dokter dari session, pastikan idUser sesuai dengan kolom di tabel user
-
-  // Query untuk mendapatkan data dokter dari tabel user
-  const queryDokter = 'SELECT namaUser as namaDokter, role FROM user WHERE idUser = ? AND role = "dokter"';
-
-  // Query untuk mendapatkan pasien yang dijadwalkan dengan dokter ini hari ini
-  const queryPasien = `
-    SELECT u.namaUser as pasien, b.tanggalBooking, b.metodePendaftaran, b.status, b.nomorAntrian, b.statusAntrian 
-    FROM booking b
-    JOIN user u ON b.pasienId = u.idUser
-    WHERE b.jadwalId IN (
-      SELECT idJadwal FROM jadwal_dokter WHERE dokterId = ?
-    ) AND DATE(b.tanggalBooking) = CURDATE() AND b.status = 'aktif'
-  `;
-
-  // Query untuk mendapatkan jadwal dokter
-  const queryJadwal = 'SELECT hari, jamMulai, jamSelesai FROM jadwal_dokter WHERE dokterId = ?';
-
-  // Query data dokter
-  pool.query(queryDokter, [dokterId], (err, dokterResult) => {
-    if (err) {
-      return res.status(500).send('Database error: ' + err.message);
+app.get('/halaman-dokter', async (req, res) => {
+  try {
+    // Cek session
+    if (!req.session.user) {
+      return res.redirect('/login');
     }
 
-    if (dokterResult.length === 0) {
-      return res.status(404).send('Dokter tidak ditemukan');
-    }
+    const dokterId = req.session.user.idUser;
+    
+    // Query untuk data dokter dengan pengecekan role yang lebih detail
+    const queryDokter = `
+      SELECT 
+        idUser,
+        namaUser as namaDokter,
+        email,
+        tanggalLahir,
+        alamat,
+        nomorTelepon,
+        role 
+      FROM user 
+      WHERE idUser = ? AND role = 'dokter'
+    `;
 
-    // Query data pasien
-    pool.query(queryPasien, [dokterId], (err, pasienResult) => {
-      if (err) {
-        return res.status(500).send('Database error: ' + err.message);
-      }
+    // Query untuk daftar pasien hari ini
+    const queryPasien = `
+      SELECT 
+        u.namaUser as pasien,
+        u.nomorTelepon,
+        b.tanggalBooking,
+        b.metodePendaftaran,
+        b.status,
+        b.nomorAntrian,
+        b.statusAntrian 
+      FROM booking b
+      JOIN user u ON b.pasienId = u.idUser
+      JOIN jadwal_dokter jd ON b.jadwalId = jd.idJadwal
+      WHERE jd.dokterId = ?
+      AND DATE(b.tanggalBooking) = CURDATE() 
+      AND b.status = 'aktif'
+      ORDER BY b.nomorAntrian ASC
+    `;
 
-      // Query jadwal dokter
-      pool.query(queryJadwal, [dokterId], (err, jadwalResult) => {
-        if (err) {
-          return res.status(500).send('Database error: ' + err.message);
-        }
+    // Query untuk jadwal dokter
+    const queryJadwal = `
+      SELECT 
+        idJadwal,
+        hari,
+        jamMulai,
+        jamSelesai 
+      FROM jadwal_dokter 
+      WHERE dokterId = ?
+      ORDER BY 
+        CASE
+          WHEN hari = 'Senin' THEN 1
+          WHEN hari = 'Selasa' THEN 2
+          WHEN hari = 'Rabu' THEN 3
+          WHEN hari = 'Kamis' THEN 4
+          WHEN hari = 'Jumat' THEN 5
+          WHEN hari = 'Sabtu' THEN 6
+          WHEN hari = 'Minggu' THEN 7
+        END ASC
+    `;
 
-        // Kirim data ke template halaman-dokter.ejs
-        res.render('halaman-dokter', {
-          user: req.session.user, // Kirim data user (dokter) ke halaman EJS
-          daftarPasien: pasienResult,
-          jadwal: jadwalResult
+    // Membuat fungsi query dengan Promise
+    const queryAsync = (query, params) => {
+      return new Promise((resolve, reject) => {
+        pool.query(query, params, (err, results) => {
+          if (err) reject(err);
+          else resolve(results);
         });
       });
+    };
+
+    // Eksekusi query dokter
+    const dokterResult = await queryAsync(queryDokter, [dokterId]);
+
+    // Validasi dokter
+    if (dokterResult.length === 0) {
+      return res.status(403).send('Akses ditolak: Anda tidak memiliki akses sebagai dokter');
+    }
+
+    // Eksekusi query pasien dan jadwal
+    const [pasienResult, jadwalResult] = await Promise.all([
+      queryAsync(queryPasien, [dokterId]),
+      queryAsync(queryJadwal, [dokterId])
+    ]);
+
+    // Format tanggal lahir
+    if (dokterResult[0].tanggalLahir) {
+      dokterResult[0].tanggalLahir = new Date(dokterResult[0].tanggalLahir)
+        .toLocaleDateString('id-ID', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        });
+    }
+
+    // Format tanggal booking
+    const formattedPasienResult = pasienResult.map(pasien => ({
+      ...pasien,
+      tanggalBooking: pasien.tanggalBooking 
+        ? new Date(pasien.tanggalBooking)
+          .toLocaleDateString('id-ID', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        : null
+    }));
+
+    // Render halaman dengan semua data
+    res.render('dokter/halaman-dokter', {
+      user: req.session.user,
+      daftarPasien: formattedPasienResult,
+      jadwal: jadwalResult,
+      dokter: dokterResult[0]
     });
-  });
+
+  } catch (error) {
+    console.error('Unexpected error:', error);
+    res.status(500).send('Terjadi kesalahan yang tidak terduga');
+  }
 });
 // Route untuk halaman catat obat
 app.get('/catat-obat', (req, res) => {
