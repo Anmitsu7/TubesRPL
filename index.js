@@ -98,23 +98,14 @@ app.post('/login', (req, res) => {
         if (isMatch) {
           // Simpan sesi dengan benar
           req.session.user = {
-            idUser: user.idUser,  // Gunakan idUser, bukan id
+            idUser: user.idUser,
             namaUser: user.namaUser,
             email: user.email,
             role: user.role
           };
 
-          // Redirect berdasarkan role
-          switch(user.role) {
-            case 'dokter':
-              return res.redirect('/halaman-dokter');
-            case 'admin':
-              return res.redirect('/halaman-admin');
-            case 'pasien':
-              return res.redirect('/halaman-pasien');
-            default:
-              return res.redirect('/dashboard');
-          }
+          // Redirect ke halaman konfirmasi dashboard
+          res.redirect('/dashboard');
         } else {
           return res.render('login', { message: 'Password salah!' });
         }
@@ -125,11 +116,15 @@ app.post('/login', (req, res) => {
       });
   });
 });
-// Dashboard Route
-app.get('/dashboard', isAuthenticated, (req, res) => {
-  const user = req.session.user;
-  if (!user) return res.redirect('/login');
-  res.render('dashboard', { user });
+
+// Middleware untuk memeriksa apakah pengguna sudah login sebelum mengakses dashboard
+app.get('/dashboard', (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/login'); // Jika tidak ada session user, redirect ke login
+  }
+  
+  // Jika session ada, tampilkan dashboard
+  res.render('dashboard', { user: req.session.user });
 });
 
 // Signup Route
@@ -843,7 +838,7 @@ app.get('/halaman-dokter', async (req, res) => {
         : null
     }));
 
-    // Render halaman dengan semua data
+     // Render halaman dengan semua data
     res.render('dokter/halaman-dokter', {
       user: req.session.user,
       daftarPasien: formattedPasienResult,
@@ -856,63 +851,161 @@ app.get('/halaman-dokter', async (req, res) => {
     res.status(500).send('Terjadi kesalahan yang tidak terduga');
   }
 });
-// Route untuk halaman catat obat
-app.get('/catat-obat', (req, res) => {
+
+app.get('/hasil-diagnosa', (req, res) => {
+  // Cek apakah user sudah login
   if (!req.session.user) {
-    return res.redirect('/login'); // Arahkan ke halaman login jika belum login
+    return res.redirect('/login');
   }
 
-  const perawatId = req.session.user.idUser; // Ambil ID perawat dari session
+  // Jika user adalah dokter, lanjutkan
+  if (req.session.user.role !== 'dokter') {
+    return res.status(403).send('Akses ditolak');
+  }
 
-  // Query untuk mendapatkan daftar pasien yang sudah diperiksa oleh perawat
+  // Query untuk mengambil data hasil diagnosa
+  const query = `
+    SELECT 
+      rm.idRiwayatMedis,
+      u.namaUser as namaPasien,
+      rm.tanggal,
+      rm.diagnosa,
+      rm.resep,
+      rm.catatan
+    FROM riwayat_medis rm
+    JOIN user u ON rm.idPasien = u.idUser
+    ORDER BY rm.tanggal DESC
+  `;
+
+  pool.query(query, (err, results) => {
+    if (err) {
+      console.error('Error fetching diagnosa:', err);
+      return res.status(500).send('Terjadi kesalahan saat mengambil data');
+    }
+
+    // Format tanggal untuk setiap hasil
+    const formattedResults = results.map(result => ({
+      ...result,
+      tanggal: new Date(result.tanggal).toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    }));
+
+    // Render halaman dengan data
+    res.render('hasil-diagnosa', {
+      user: req.session.user,
+      hasilDiagnosa: formattedResults
+    });
+  });
+});
+app.post('/dokter/catat-obat', (req, res) => {
+  // Cek session
+  if (!req.session.user) {
+    return res.redirect('/login');
+  }
+
+  // Cek role
+  if (req.session.user.role !== 'dokter') {
+    return res.status(403).send('Akses ditolak: Hanya dokter yang dapat mencatat obat');
+  }
+
+  // Dapatkan pasienId dari tombol submit
+  const pasienId = req.body.submit;
+  const obat = req.body[`obat_${pasienId}`];
+
+  // Validasi input
+  if (!pasienId || !obat) {
+    return res.status(400).send('Data tidak lengkap');
+  }
+
+  // Query untuk mencatat obat ke riwayat medis
+  const queryCatatObat = `
+    INSERT INTO riwayat_medis 
+    (idPasien, tanggal, resep, catatan) 
+    VALUES 
+    (?, NOW(), ?, 'Obat diberikan oleh dokter')
+  `;
+
+  pool.query(queryCatatObat, [pasienId, obat], (err, result) => {
+    if (err) {
+      console.error('Error mencatat obat:', err);
+      return res.status(500).send('Terjadi kesalahan saat mencatat obat');
+    }
+
+    // Update status booking jika diperlukan
+    const queryUpdateBooking = `
+      UPDATE booking 
+      SET status = 'selesai' 
+      WHERE pasienId = ? AND DATE(tanggalBooking) = CURDATE()
+    `;
+
+    pool.query(queryUpdateBooking, [pasienId], (updateErr) => {
+      if (updateErr) {
+        console.error('Error update status booking:', updateErr);
+      }
+
+      // Redirect dengan pesan sukses
+      req.flash('success', 'Obat berhasil dicatat');
+      res.redirect('/dokter/catat-obat');
+    });
+  });
+});
+
+// Rute untuk halaman catat obat khusus dokter
+app.get('/dokter/catat-obat', (req, res) => {
+  // Cek session
+  if (!req.session.user) {
+    return res.redirect('/login');
+  }
+
+  // Cek role (pastikan hanya dokter yang bisa akses)
+  if (req.session.user.role !== 'dokter') {
+    return res.status(403).send('Akses ditolak: Hanya dokter yang dapat mengakses halaman ini');
+  }
+
+  // Query untuk mendapatkan daftar pasien hari ini
   const queryPasien = `
-    SELECT p.namaUser as pasien, b.tanggalBooking, b.metodePendaftaran, b.status, b.nomorAntrian, b.statusAntrian
+    SELECT 
+      u.idUser as pasienId,
+      u.namaUser as pasien,
+      b.idBooking,
+      b.tanggalBooking
     FROM booking b
-    JOIN user p ON b.pasienId = p.idUser
-    WHERE b.perawatId = ? AND DATE(b.tanggalBooking) = CURDATE() AND b.status = 'aktif'
+    JOIN user u ON b.pasienId = u.idUser
+    WHERE DATE(b.tanggalBooking) = CURDATE() 
+    AND b.status = 'aktif'
+    ORDER BY b.tanggalBooking
   `;
 
-  pool.query(queryPasien, [perawatId], (err, pasienResult) => {
+  pool.query(queryPasien, (err, daftarPasien) => {
     if (err) {
-      return res.status(500).send('Database error: ' + err.message);
+      console.error('Error mengambil daftar pasien:', err);
+      return res.status(500).send('Terjadi kesalahan saat mengambil daftar pasien');
     }
 
-    // Kirim data ke template halaman-catat-obat.ejs
-    res.render('halaman-catat-obat', {
-      user: req.session.user, // Kirim data user (perawat) ke halaman EJS
-      daftarPasien: pasienResult
+    // Format tanggal untuk setiap pasien
+    const formattedPasien = daftarPasien.map(pasien => ({
+      ...pasien,
+      tanggalBooking: new Date(pasien.tanggalBooking)
+        .toLocaleDateString('id-ID', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        })
+    }));
+
+    // Render halaman catat obat
+    res.render('dokter/catat-obat', {
+      user: req.session.user,
+      daftarPasien: formattedPasien
     });
   });
 });
-// Route untuk halaman diagnosa
-app.get('/diagnosa', (req, res) => {
-  if (!req.session.user) {
-    return res.redirect('/login'); // Arahkan ke halaman login jika belum login
-  }
 
-  const dokterId = req.session.user.idUser; // Ambil ID dokter dari session
-
-  // Query untuk mendapatkan hasil diagnosa pasien
-  const queryDiagnosa = `
-    SELECT p.namaUser as pasien, d.hasilDiagnosa, d.tanggalDiagnosa
-    FROM diagnosa d
-    JOIN user p ON d.pasienId = p.idUser
-    WHERE d.dokterId = ? AND DATE(d.tanggalDiagnosa) = CURDATE()
-  `;
-
-  // Query untuk mendapatkan daftar pasien yang sudah diperiksa oleh dokter hari ini
-  pool.query(queryDiagnosa, [dokterId], (err, diagnosaResult) => {
-    if (err) {
-      return res.status(500).send('Database error: ' + err.message);
-    }
-
-    // Kirim data ke template halaman-diagnosa.ejs
-    res.render('perawat/halaman-diagnosa', {
-      user: req.session.user, // Kirim data user (dokter) ke halaman EJS
-      diagnosaList: diagnosaResult
-    });
-  });
-});
 
 //-------------------------------------------------------------------------------------------------
 
