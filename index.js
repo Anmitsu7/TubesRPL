@@ -134,13 +134,34 @@ app.get('/signup', (req, res) => {
 
 // Route untuk memproses signup
 app.post('/signup', (req, res) => {
-  const { namaUser, email, password, tanggalLahir, alamat, nomorTelepon } = req.body;
+  const { namaUser, email, password, confirmPassword, tanggalLahir, alamat, nomorTelepon } = req.body;
 
+  // Validasi server-side
+  if (password.length < 6) {
+    return res.render('signup', {
+      message: 'Password minimal 6 karakter',
+      alertType: 'error',
+      // Kembalikan data form sebelumnya agar tidak perlu diisi ulang
+      formData: { namaUser, email, tanggalLahir, alamat, nomorTelepon }
+    });
+  }
+
+  // Cek konfirmasi password
+  if (password !== confirmPassword) {
+    return res.render('signup', {
+      message: 'Konfirmasi password tidak cocok',
+      alertType: 'error',
+      formData: { namaUser, email, tanggalLahir, alamat, nomorTelepon }
+    });
+  }
+
+  // Lanjutkan proses hash password
   bcrypt.hash(password, 10, (err, hashedPassword) => {
     if (err) {
       return res.render('signup', {
         message: 'Terjadi kesalahan saat mendaftar',
-        alertType: 'error'
+        alertType: 'error',
+        formData: { namaUser, email, tanggalLahir, alamat, nomorTelepon }
       });
     }
 
@@ -150,7 +171,8 @@ app.post('/signup', (req, res) => {
       if (err) {
         return res.render('signup', {
           message: 'Email sudah terdaftar atau terjadi kesalahan',
-          alertType: 'error'
+          alertType: 'error',
+          formData: { namaUser, email, tanggalLahir, alamat, nomorTelepon }
         });
       }
 
@@ -175,7 +197,7 @@ app.get('/logout', (req, res) => {
 //rute pasien
 app.get('/halaman-pasien', isAuthenticated, (req, res) => {
   if (req.session.user.role === 'pasien') {
-    res.render('halaman-pasien', { user: req.session.user });
+    res.render('pasien/halaman-pasien', { user: req.session.user });
   } else {
     res.redirect('/dashboard');
   }
@@ -305,23 +327,39 @@ app.get('/admin/kelola-antrian', isAuthenticated, (req, res) => {
     return res.redirect('/dashboard');
   }
 
-  //ubah status booking menjadi pending
+  const metodePendaftaran = req.query.metode || 'online'; // Default ke online
+
   const query = `
-    SELECT b.*, u.namaUser, u.nomorTelepon, jd.hari, jd.jamMulai, jd.jamSelesai, d.namaUser as namaDokter
+    SELECT b.*, u.namaUser, u.nomorTelepon, jd.hari, jd.jamMulai, jd.jamSelesai, d.namaUser as namaDokter,
+    jd.${metodePendaftaran === 'online' ? 'sisaKuotaOnline' : 'sisaKuotaOffline'} as sisaKuota
     FROM booking b
     JOIN user u ON b.pasienId = u.idUser
     JOIN jadwal_dokter jd ON b.jadwalId = jd.idJadwal
     JOIN user d ON jd.dokterId = d.idUser
-    WHERE b.status = 'aktif' AND b.nomorAntrian IS NULL
+    WHERE b.status = 'aktif' AND b.nomorAntrian IS NULL AND b.metodePendaftaran = ?
     ORDER BY b.tanggalBooking
   `;
 
-  pool.query(query, (err, bookings) => {
+  pool.query(query, [metodePendaftaran], (err, bookings) => {
     if (err) {
       console.error(err);
       return res.status(500).send('Server error');
     }
-    res.render('admin/kelola-antrian', { user: req.session.user, bookings });
+
+    // Dapatkan jadwal dokter untuk filter
+    pool.query('SELECT * FROM jadwal_dokter', (errJadwal, jadwalDokter) => {
+      if (errJadwal) {
+        console.error(errJadwal);
+        return res.status(500).send('Server error');
+      }
+
+      res.render('admin/kelola-antrian', { 
+        user: req.session.user, 
+        bookings, 
+        metodePendaftaran,
+        jadwalDokter
+      });
+    });
   });
 });
 
@@ -331,16 +369,66 @@ app.post('/admin/assign-antrian', isAuthenticated, (req, res) => {
     return res.redirect('/dashboard');
   }
 
-  const { bookingId, nomorAntrian } = req.body;
+  const { bookingId, nomorAntrian, metodePendaftaran } = req.body;
 
-  const query = 'UPDATE booking SET nomorAntrian = ? WHERE idBooking = ?';
-  
-  pool.query(query, [nomorAntrian, bookingId], (err) => {
+  // Mulai transaksi untuk memastikan konsistensi data
+  pool.getConnection((err, connection) => {
     if (err) {
       console.error(err);
-      return res.status(500).send('Error assigning queue number');
+      return res.status(500).send('Database connection error');
     }
-    res.redirect('/admin/kelola-antrian');
+
+    connection.beginTransaction((err) => {
+      if (err) {
+        connection.release();
+        console.error(err);
+        return res.status(500).send('Transaction error');
+      }
+
+      // Update nomor antrian pada booking
+      const updateBookingQuery = 'UPDATE booking SET nomorAntrian = ? WHERE idBooking = ?';
+      connection.query(updateBookingQuery, [nomorAntrian, bookingId], (err) => {
+        if (err) {
+          return connection.rollback(() => {
+            connection.release();
+            console.error(err);
+            res.status(500).send('Error updating booking');
+          });
+        }
+
+        // Kurangi sisa kuota pada jadwal dokter
+        const updateKuotaQuery = `
+          UPDATE jadwal_dokter 
+          SET ${metodePendaftaran === 'online' ? 'sisaKuotaOnline' : 'sisaKuotaOffline'} = 
+          ${metodePendaftaran === 'online' ? 'sisaKuotaOnline' : 'sisaKuotaOffline'} - 1 
+          WHERE idJadwal = (SELECT jadwalId FROM booking WHERE idBooking = ?)
+        `;
+        
+        connection.query(updateKuotaQuery, [bookingId], (err) => {
+          if (err) {
+            return connection.rollback(() => {
+              connection.release();
+              console.error(err);
+              res.status(500).send('Error updating quota');
+            });
+          }
+
+          // Commit transaksi
+          connection.commit((err) => {
+            if (err) {
+              return connection.rollback(() => {
+                connection.release();
+                console.error(err);
+                res.status(500).send('Commit error');
+              });
+            }
+
+            connection.release();
+            res.redirect(`/admin/kelola-antrian?metode=${metodePendaftaran}`);
+          });
+        });
+      });
+    });
   });
 });
 
@@ -350,13 +438,34 @@ app.get('/admin/daftar-pasien-offline', isAuthenticated, (req, res) => {
     return res.redirect('/dashboard');
   }
 
-  // Fetch doctors for dropdown
-  pool.query('SELECT * FROM user WHERE role = "dokter"', (err, doctors) => {
+  // Fetch doctors with their schedules
+  const query = `
+    SELECT u.idUser, u.namaUser, 
+           GROUP_CONCAT(
+             CONCAT(j.hari, ': ', 
+                    TIME_FORMAT(j.jamMulai, '%H:%i'), 
+                    ' - ', 
+                    TIME_FORMAT(j.jamSelesai, '%H:%i'), 
+                    ' (Sisa Kuota Offline: ', 
+                    j.sisaKuotaOffline, ')'
+             ) SEPARATOR '; '
+           ) AS jadwal
+    FROM user u
+    LEFT JOIN jadwal_dokter j ON u.idUser = j.dokterId
+    WHERE u.role = 'dokter'
+    GROUP BY u.idUser, u.namaUser
+  `;
+
+  pool.query(query, (err, doctors) => {
     if (err) {
       console.error(err);
       return res.status(500).send('Server error');
     }
-    res.render('admin/daftar-pasien-offline', { user: req.session.user, doctors });
+    
+    res.render('admin/daftar-pasien-offline', { 
+      user: req.session.user, 
+      doctors: doctors
+    });
   });
 });
 
@@ -414,6 +523,35 @@ app.post('/admin/daftar-pasien-offline', isAuthenticated, (req, res) => {
     } else {
       registerPatient(existingUser[0].idUser);
     }
+  });
+});
+
+app.get('/admin/jadwal-dokter/:dokterId', isAuthenticated, (req, res) => {
+  if (req.session.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Unauthorized' });
+  }
+
+  const dokterId = req.params.dokterId;
+  const query = `
+    SELECT idJadwal, hari, 
+           TIME_FORMAT(jamMulai, '%H:%i') as jamMulai, 
+           TIME_FORMAT(jamSelesai, '%H:%i') as jamSelesai, 
+           sisaKuotaOffline,
+           CASE 
+             WHEN hari = DAYNAME(CURRENT_DATE) THEN 1 
+             ELSE 0 
+           END as isToday
+    FROM jadwal_dokter 
+    WHERE dokterId = ? AND sisaKuotaOffline > 0
+    ORDER BY isToday DESC
+  `;
+
+  pool.query(query, [dokterId], (err, schedules) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Server error' });
+    }
+    res.json(schedules);
   });
 });
 
@@ -689,7 +827,7 @@ app.get('/diagnosa', (req, res) => {
     }
 
     // Kirim data ke template halaman-diagnosa.ejs
-    res.render('halaman-diagnosa', {
+    res.render('perawat/halaman-diagnosa', {
       user: req.session.user, // Kirim data user (dokter) ke halaman EJS
       diagnosaList: diagnosaResult
     });
