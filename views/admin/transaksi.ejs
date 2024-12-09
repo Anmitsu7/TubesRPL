@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Manajemen Transaksi</title>
+    <%- include('partials/head') %>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <%- include('partials/sidebar', { user: user }) %>
+            
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <%- include('partials/header', { pageTitle: 'Manajemen Transaksi', user: user }) %>
+                
+                <div class="card shadow">
+                    <div class="card-body">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID Transaksi</th>
+                                    <th>Nama Pasien</th>
+                                    <th>Nama Dokter</th>
+                                    <th>Tanggal</th>
+                                    <th>Status</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% transaksi.forEach(function(item) { %>
+                                <tr>
+                                    <td><%= item.id %></td>
+                                    <td><%= item.namaPasien %></td>
+                                    <td><%= item.namaDokter %></td>
+                                    <td><%= new Date(item.tanggal).toLocaleString() %></td>
+                                    <td><%= item.status %></td>
+                                    <td>
+                                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#prosesTransaksiModal-<%= item.id %>">
+                                            Proses Transaksi
+                                        </button>
+                                    </td>
+                                </tr>
+
+                                <!-- Modal untuk setiap transaksi -->
+                                <div class="modal fade" id="prosesTransaksiModal-<%= item.id %>" tabindex="-1">
+                                    <!-- Isi modal sama seperti sebelumnya -->
+                                </div>
+                                <% }); %>
+                            </tbody>
+                        </table>
+
+                        <% if (transaksi.length === 0) { %>
+                        <div class="alert alert-info text-center">
+                            Tidak ada transaksi yang perlu diproses
+                        </div>
+                        <% } %>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <%- include('partials/footer') %>
+</body>
+</html>
