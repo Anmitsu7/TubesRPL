@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Manajemen Antrian</title>
+    <%- include('partials/head') %>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <%- include('partials/sidebar', { user: user }) %>
+            
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <%- include('partials/header', { pageTitle: 'Manajemen Antrian', user: user }) %>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <ul class="nav nav-tabs card-header-tabs">
+                            <li class="nav-item">
+                                <a class="nav-link <%= metodePendaftaran === 'online' ? 'active' : '' %>" 
+                                   href="/admin/kelola-antrian?metode=online">Antrian Online</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link <%= metodePendaftaran === 'offline' ? 'active' : '' %>" 
+                                   href="/admin/kelola-antrian?metode=offline">Antrian Offline</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Nama Pasien</th>
+                                    <th>Nomor Telepon</th>
+                                    <th>Dokter</th>
+                                    <th>Jadwal</th>
+                                    <th>Tanggal Booking</th>
+                                    <th>Sisa Kuota</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% bookings.forEach(function(booking) { %>
+                                <tr>
+                                    <td><%= booking.namaUser %></td>
+                                    <td><%= booking.nomorTelepon %></td>
+                                    <td><%= booking.namaDokter %></td>
+                                    <td><%= booking.hari %> <%= booking.jamMulai %> - <%= booking.jamSelesai %></td>
+                                    <td><%= booking.tanggalBooking %></td>
+                                    <td><%= booking.sisaKuota %></td>
+                                    <td>
+                                        <form action="/admin/assign-antrian" method="POST" class="d-inline">
+                                            <input type="hidden" name="bookingId" value="<%= booking.idBooking %>">
+                                            <input type="hidden" name="metodePendaftaran" value="<%= metodePendaftaran %>">
+                                            <input type="text" name="nomorAntrian" placeholder="Nomor Antrian" required class="form-control form-control-sm d-inline w-auto">
+                                            <button type="submit" class="btn btn-primary btn-sm" 
+                                                    <%= booking.sisaKuota <= 0 ? 'disabled' : '' %>>
+                                                Assign
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                <% }); %>
+                            </tbody>
+                        </table>
+                        
+                        <% if (bookings.length === 0) { %>
+                            <div class="alert alert-info">
+                                Tidak ada antrian <%= metodePendaftaran === 'online' ? 'online' : 'offline' %> yang tersedia.
+                            </div>
+                        <% } %>
+
+                        <a href="/halaman-admin" class="btn btn-secondary">Kembali ke Dashboard</a>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <%- include('partials/footer') %>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Riwayat Medis</title>
+    <link rel="stylesheet" href="/css/riwayat-medis.css">
+</head>
+<body>
+    <header>
+        <h1>Riwayat Medis</h1>
+    </header>
+    <div class="container">
+        <% if (riwayatMedis.length > 0) { %>
+            <% riwayatMedis.forEach(item => { %>
+                <div class="riwayat-item">
+                    <h3><%= new Date(item.tanggal).toLocaleDateString() %></h3>
+                    <p><strong>Diagnosa:</strong> <%= item.diagnosa %></p>
+                    <p><strong>Catatan:</strong> <%= item.catatan %></p>
+                </div>
+            <% }) %>
+        <% } else { %>
+            <p class="no-data">Belum ada riwayat medis.</p>
+        <% } %>
+        <a href="/halaman-pasien" class="button-back">Kembali</a>
+    </div>
+</body>
+</html>
