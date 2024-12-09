@@ -210,7 +210,7 @@ app.get('/halaman-pasien', isAuthenticated, (req, res) => {
 });
 
 //cek jadwal dokter
-app.get('/cek-jadwal-dokter', isAuthenticated, (req, res) => {
+app.get('/pasien/cek-jadwal-dokter', isAuthenticated, (req, res) => {
   const { dokterId, hari } = req.query;
 
   pool.query('SELECT * FROM user WHERE role = "dokter"', (err, doctors) => {
@@ -233,7 +233,7 @@ app.get('/cek-jadwal-dokter', isAuthenticated, (req, res) => {
           return res.status(500).send('Server error saat mengambil jadwal dokter');
         }
 
-        res.render('cek-jadwal-dokter', {
+        res.render('pasien/cek-jadwal-dokter', {
           jadwal: results,
           doctors,
           dokterId,
@@ -241,7 +241,7 @@ app.get('/cek-jadwal-dokter', isAuthenticated, (req, res) => {
         });
       });
     } else {
-      res.render('cek-jadwal-dokter', { doctors, jadwal: [], dokterId: null, hari: null });
+      res.render('pasien/cek-jadwal-dokter', { doctors, jadwal: [], dokterId: null, hari: null });
     }
   });
 });
@@ -296,8 +296,9 @@ app.post('/booking', isAuthenticated, (req, res) => {
 });
 
 //cek riwayat medis
-app.get('/riwayat-medis', isAuthenticated, (req, res) => {
-  const userId = req.session.user.id; // Mengambil ID pasien dari sesi
+// Rute: Halaman riwayat medis
+app.get('/pasien/riwayat-medis', isAuthenticated, (req, res) => {
+  const userId = req.session.user.idUser; // Mengambil idUser dari session, bukan id
 
   // Query untuk mengambil data riwayat medis pasien
   pool.query(
@@ -309,13 +310,17 @@ app.get('/riwayat-medis', isAuthenticated, (req, res) => {
         return res.status(500).send('Server error');
       }
 
-      res.render('riwayat-medis', {
+      // Debugging: Periksa hasil query
+      console.log('Query Results:', results);
+
+      res.render('pasien/riwayat-medis', {
         user: req.session.user, // Data pengguna
         riwayatMedis: results,  // Data riwayat medis
       });
     }
   );
 });
+
 
 //-------------------------------------------------------------------------------------------------
 //rute admin
