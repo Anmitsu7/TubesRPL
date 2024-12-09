@@ -10,7 +10,9 @@ const PORT = process.env.PORT || 3000;
 
 // Static file path
 const __dirname = path.resolve();
-app.use(express.static(path.join(__dirname, 'public')));
+ app.use(express.static(path.join(__dirname, 'public')));
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');
 
 // Middleware
 app.use(bodyParser.json());
@@ -56,6 +58,11 @@ app.get('/', (req, res) => {
 });
 
 // Login Route
+// Route untuk menampilkan halaman login
+app.get('/login', (req, res) => {
+  res.render('login', { message: null });
+});
+
 // Route untuk menampilkan halaman login
 app.get('/login', (req, res) => {
   res.render('login', { message: null });
@@ -126,7 +133,6 @@ app.get('/dashboard', (req, res) => {
   // Jika session ada, tampilkan dashboard
   res.render('dashboard', { user: req.session.user });
 });
-
 // Signup Route
 // Route untuk menampilkan halaman signup
 app.get('/signup', (req, res) => {
@@ -205,7 +211,7 @@ app.get('/halaman-pasien', isAuthenticated, (req, res) => {
 });
 
 //cek jadwal dokter
-app.get('/pasien/cek-jadwal-dokter', isAuthenticated, (req, res) => {
+app.get('/cek-jadwal-dokter', isAuthenticated, (req, res) => {
   const { dokterId, hari } = req.query;
 
   pool.query('SELECT * FROM user WHERE role = "dokter"', (err, doctors) => {
@@ -228,7 +234,7 @@ app.get('/pasien/cek-jadwal-dokter', isAuthenticated, (req, res) => {
           return res.status(500).send('Server error saat mengambil jadwal dokter');
         }
 
-        res.render('pasien/cek-jadwal-dokter', {
+        res.render('cek-jadwal-dokter', {
           jadwal: results,
           doctors,
           dokterId,
@@ -236,7 +242,7 @@ app.get('/pasien/cek-jadwal-dokter', isAuthenticated, (req, res) => {
         });
       });
     } else {
-      res.render('pasien/cek-jadwal-dokter', { doctors, jadwal: [], dokterId: null, hari: null });
+      res.render('cek-jadwal-dokter', { doctors, jadwal: [], dokterId: null, hari: null });
     }
   });
 });
@@ -291,9 +297,8 @@ app.post('/booking', isAuthenticated, (req, res) => {
 });
 
 //cek riwayat medis
-// Rute: Halaman riwayat medis
-app.get('/pasien/riwayat-medis', isAuthenticated, (req, res) => {
-  const userId = req.session.user.idUser; // Mengambil idUser dari session, bukan id
+app.get('/riwayat-medis', isAuthenticated, (req, res) => {
+  const userId = req.session.user.id; // Mengambil ID pasien dari sesi
 
   // Query untuk mengambil data riwayat medis pasien
   pool.query(
@@ -305,17 +310,13 @@ app.get('/pasien/riwayat-medis', isAuthenticated, (req, res) => {
         return res.status(500).send('Server error');
       }
 
-      // Debugging: Periksa hasil query
-      console.log('Query Results:', results);
-
-      res.render('pasien/riwayat-medis', {
+      res.render('riwayat-medis', {
         user: req.session.user, // Data pengguna
         riwayatMedis: results,  // Data riwayat medis
       });
     }
   );
 });
-
 
 //-------------------------------------------------------------------------------------------------
 //rute admin
@@ -838,7 +839,7 @@ app.get('/halaman-dokter', async (req, res) => {
         : null
     }));
 
-     // Render halaman dengan semua data
+    // Render halaman dengan semua data
     res.render('dokter/halaman-dokter', {
       user: req.session.user,
       daftarPasien: formattedPasienResult,
