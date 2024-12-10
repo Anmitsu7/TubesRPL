@@ -1,12 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catat Obat - Klinik SehatCare</title>
-    <link rel="stylesheet" href="public/css/halaman-catat-obat.css">
-    <style>
-        /* Reset beberapa styling dasar */
+/* Reset beberapa styling dasar */
 * {
     margin: 0;
     padding: 0;
@@ -165,45 +157,3 @@ footer {
     bottom: 0;
     left: 0;
 }
-
-    </style>
-</head>
-<body>
-    <header>
-        <h1>Klinik SehatCare</h1>
-        <nav>
-            <a href="/halaman-dokter">Halaman Dokter</a>
-            <a href="/diagnosa">Hasil Diagnosa</a>
-            <a href="/logout">Log Out</a>
-        </nav>
-    </header>
-
-    <section>
-        <h2>Catat Obat untuk Pasien Hari Ini</h2>
-        <% if (daftarPasien.length === 0) { %>
-            <p>Belum ada pasien yang dijadwalkan untuk menerima obat hari ini.</p>
-        <% } else { %>
-            <form action="/proses-catat-obat" method="POST">
-                <table>
-                    <tr>
-                        <th>Nama Pasien</th>
-                        <th>Obat yang Diberikan</th>
-                        <th>Aksi</th>
-                    </tr>
-                    <% daftarPasien.forEach(function(pasien) { %>
-                        <tr>
-                            <td><%= pasien.pasien %></td>
-                            <td><input type="text" name="obat_<%= pasien.pasienId %>" placeholder="Nama Obat" required></td>
-                            <td><button type="submit" name="submit" value="<%= pasien.pasienId %>">Catat Obat</button></td>
-                        </tr>
-                    <% }); %>
-                </table>
-            </form>
-        <% } %>
-    </section>
-
-    <footer>
-        <p>&copy; 2024 Klinik SehatCare. All rights reserved.</p>
-    </footer>
-</body>
-</html>
