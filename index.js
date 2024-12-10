@@ -11,8 +11,9 @@ const PORT = process.env.PORT || 3000;
 // Static file path
 const __dirname = path.resolve();
  app.use(express.static(path.join(__dirname, 'public')));
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'ejs');
+ app.set('views', path.join(__dirname, 'views'));
+ app.set('view engine', 'ejs');
+ 
 
 // Middleware
 app.use(bodyParser.json());
@@ -853,7 +854,7 @@ app.get('/halaman-dokter', async (req, res) => {
   }
 });
 
-app.get('/hasil-diagnosa', (req, res) => {
+app.get('/diagnosa', (req, res) => {
   // Cek apakah user sudah login
   if (!req.session.user) {
     return res.redirect('/login');
@@ -897,13 +898,13 @@ app.get('/hasil-diagnosa', (req, res) => {
     }));
 
     // Render halaman dengan data
-    res.render('hasil-diagnosa', {
+    res.render('dokter/diagnosa', {
       user: req.session.user,
       hasilDiagnosa: formattedResults
     });
   });
 });
-app.post('/dokter/catat-obat', (req, res) => {
+app.post('catat-obat', (req, res) => {
   // Cek session
   if (!req.session.user) {
     return res.redirect('/login');
@@ -957,7 +958,7 @@ app.post('/dokter/catat-obat', (req, res) => {
 });
 
 // Rute untuk halaman catat obat khusus dokter
-app.get('/dokter/catat-obat', (req, res) => {
+app.get('/catat-obat', (req, res) => {
   // Cek session
   if (!req.session.user) {
     return res.redirect('/login');
@@ -1005,6 +1006,85 @@ app.get('/dokter/catat-obat', (req, res) => {
       daftarPasien: formattedPasien
     });
   });
+});
+
+app.get('/lihat-jadwal-pasien', (req, res) => {
+  try {
+    const dokterId = req.query.dokterId;  
+
+    // Debug: cek apakah dokterId ada dalam query string
+    console.log('dokterId:', dokterId);
+
+    // Validasi input dokterId
+    if (!dokterId) {
+      return res.render('dokter/lihat-jadwal-pasien', {
+        user: req.session.user || {},
+        jadwalPasien: [],
+        totalPasien: 0,
+        pesan: 'Dokter ID tidak boleh kosong, silakan pilih dokter terlebih dahulu.'
+      });
+    }
+
+    // Query untuk mendapatkan jadwal pasien dengan informasi lengkap
+    const query = `
+      SELECT 
+        u.namaUser AS pasien, 
+        u.nomorTelepon AS teleponPasien,
+        b.tanggalBooking, 
+        b.metodePendaftaran, 
+        b.nomorAntrian, 
+        b.statusAntrian,
+        jd.hari,
+        jd.jamMulai,
+        jd.jamSelesai,
+        dok.namaUser AS namaDokter
+      FROM booking b
+      JOIN user u ON b.pasienId = u.idUser
+      JOIN jadwal_dokter jd ON b.jadwalId = jd.idJadwal
+      JOIN user dok ON jd.dokterId = dok.idUser
+      WHERE jd.dokterId = ? 
+        AND DATE(b.tanggalBooking) = CURDATE()
+      ORDER BY b.tanggalBooking;
+    `;
+
+    pool.query(query, [dokterId], (err, hasil) => {
+      if (err) {
+        console.error('Database error:', err);
+        return res.status(500).render('error', {
+          message: 'Kesalahan server: Gagal mengambil jadwal pasien',
+          user: req.session.user || {}
+        });
+      }
+
+      // Proses data untuk tampilan
+      const jadwalPasien = hasil.map(item => ({
+        namaPasien: item.pasien,
+        teleponPasien: item.teleponPasien,
+        tanggalBooking: moment(item.tanggalBooking).format('DD MMMM YYYY HH:mm'),
+        metodePendaftaran: item.metodePendaftaran,
+        nomorAntrian: item.nomorAntrian || 'Belum ditentukan',
+        statusAntrian: item.statusAntrian,
+        hari: item.hari,
+        jamMulai: item.jamMulai,
+        jamSelesai: item.jamSelesai,
+        namaDokter: item.namaDokter
+      }));
+
+      // Render halaman dengan data
+      res.render('dokter/lihat-jadwal-pasien', {
+        user: req.session.user || {},
+        jadwalPasien: jadwalPasien,
+        totalPasien: jadwalPasien.length,
+        pesan: jadwalPasien.length === 0 ? 'Tidak ada jadwal pasien hari ini.' : null
+      });
+    });
+  } catch (error) {
+    console.error('Unexpected error:', error);
+    res.status(500).render('error', {
+      message: 'Terjadi kesalahan tidak terduga',
+      user: req.session.user || {}
+    });
+  }
 });
 
 
