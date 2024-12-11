@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Halaman Perawat - Daftar Antrian</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .status-menunggu { background-color: #f8d7da; }
+        .status-dipanggil { background-color: #fff3cd; }
+        .status-selesai { background-color: #d4edda; }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="mb-4">Daftar Antrian Pasien</h1>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID Booking</th>
+                    <th>ID Pasien</th>
+                    <th>Nama Pasien</th>
+                    <th>Hari Jadwal</th>
+                    <th>Jam Praktek</th>
+                    <th>Status Antrian</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (bookings && bookings.length > 0) { %>
+                    <% bookings.forEach(function(booking) { %>
+                    <tr class="status-<%= booking.statusAntrian %>">
+                        <td><%= booking.idBooking %></td>
+                        <td><%= booking.pasienId %></td>
+                        <td><%= booking.namaPasien %></td>
+                        <td><%= booking.hari %></td>
+                        <td><%= booking.jamMulai %> - <%= booking.jamSelesai %></td>
+                        <td class="status-column"><%= booking.statusAntrian %></td>
+                        <td>
+                            <form action="/halaman-perawat" method="POST" class="d-inline">
+                                <input type="hidden" name="bookingId" value="<%= booking.idBooking %>">
+                                <input type="hidden" name="currentStatus" value="<%= booking.statusAntrian %>">
+                                <button type="submit" class="btn btn-primary btn-sm">
+                                    Update Status
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    <% }); %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="7" class="text-center">Tidak ada antrian saat ini</td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Optional: Tambahkan interaktivitas dengan JavaScript jika diperlukan
+            const forms = document.querySelectorAll('form');
+            
+            forms.forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    const currentStatus = this.querySelector('input[name="currentStatus"]').value;
+                    const confirmMessage = {
+                        'menunggu': 'Apakah Anda yakin ingin memanggil pasien ini?',
+                        'dipanggil': 'Apakah Anda yakin ingin menyelesaikan antrian ini?'
+                    };
+
+                    if (!confirm(confirmMessage[currentStatus] || 'Konfirmasi update status')) {
+                        e.preventDefault();
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
