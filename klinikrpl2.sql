@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 11, 2024 at 04:41 AM
+-- Generation Time: Dec 11, 2024 at 08:32 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -43,7 +43,7 @@ CREATE TABLE `booking` (
 --
 
 INSERT INTO `booking` (`idBooking`, `pasienId`, `jadwalId`, `tanggalBooking`, `metodePendaftaran`, `status`, `nomorAntrian`, `statusAntrian`) VALUES
-(1, 4, 2, '2024-12-04 23:00:34', 'offline', 'aktif', NULL, 'menunggu'),
+(1, 4, 2, '2024-12-04 23:00:34', 'offline', 'aktif', '1', 'menunggu'),
 (2, 4, 2, '2024-12-04 23:00:42', 'online', 'aktif', '1', 'menunggu');
 
 -- --------------------------------------------------------
@@ -69,12 +69,26 @@ CREATE TABLE `jadwal_dokter` (
 --
 
 INSERT INTO `jadwal_dokter` (`idJadwal`, `dokterId`, `hari`, `jamMulai`, `jamSelesai`, `kuotaOnline`, `kuotaOffline`, `sisaKuotaOnline`, `sisaKuotaOffline`) VALUES
-(2, 1, 'Senin', '08:00:00', '16:00:00', 10, 5, 8, 4),
+(2, 1, 'Senin', '08:00:00', '16:00:00', 10, 5, 8, 3),
 (3, 1, 'Rabu', '09:00:00', '17:00:00', 8, 7, 8, 7),
 (4, 1, 'Jumat', '10:00:00', '18:00:00', 12, 6, 12, 6),
 (5, 2, 'Selasa', '08:30:00', '16:30:00', 9, 6, 9, 6),
 (6, 2, 'Kamis', '09:30:00', '17:30:00', 7, 8, 7, 8),
-(7, 2, 'Sabtu', '07:00:00', '15:00:00', 11, 5, 11, 5);
+(7, 2, 'Sabtu', '07:00:00', '15:00:00', 11, 5, 11, 5),
+(8, 10, 'Senin', '09:00:00', '15:00:00', 10, 8, 10, 8),
+(9, 10, 'Rabu', '13:00:00', '19:00:00', 8, 6, 8, 6),
+(10, 10, 'Jumat', '08:00:00', '14:00:00', 12, 8, 12, 8),
+(11, 11, 'Selasa', '07:00:00', '13:00:00', 10, 7, 10, 7),
+(12, 11, 'Kamis', '14:00:00', '20:00:00', 8, 6, 8, 6),
+(13, 11, 'Sabtu', '09:00:00', '15:00:00', 12, 8, 12, 8),
+(14, 12, 'Senin', '14:00:00', '20:00:00', 10, 8, 10, 8),
+(15, 12, 'Rabu', '08:00:00', '14:00:00', 8, 6, 8, 5),
+(16, 12, 'Jumat', '13:00:00', '19:00:00', 12, 8, 12, 8),
+(17, 13, 'Selasa', '13:00:00', '19:00:00', 10, 7, 10, 7),
+(18, 13, 'Kamis', '08:00:00', '14:00:00', 8, 6, 8, 6),
+(19, 13, 'Sabtu', '07:00:00', '13:00:00', 12, 8, 12, 8),
+(20, 1, 'Minggu', '08:00:00', '13:00:00', 8, 5, 8, 5),
+(21, 10, 'Minggu', '13:00:00', '18:00:00', 8, 5, 8, 5);
 
 -- --------------------------------------------------------
 
@@ -143,7 +157,11 @@ INSERT INTO `user` (`idUser`, `namaUser`, `email`, `password`, `tanggalLahir`, `
 (5, 'admin', 'admin@gmail.com', 'admin', '2001-12-01', 'bukit jarian', '0812', 'admin'),
 (7, 'tes', 'tes@gmail.com', '$2a$10$WV4.2hB2Imw61zRlLjcZMeueuLJWpmPN36ggS84Js/rOB9bRrmLYW', '2001-01-01', 'bukitjarian', '0822', 'pasien'),
 (9, 'tes2', 'tes2@gmail.com', '$2a$10$A3gBZj8BzZnitwdcxzW6retxrdf0/paP0ZgJU7Rys01Qffd3zT47.', '2001-01-01', 'bukitjarian', '0822', 'pasien'),
-(10, 'perawat', 'perawat@klinik.com', 'perawat', '1980-01-15', 'Jl. Perawat No. 20', '081234528009', 'perawat');
+(10, 'Dr. Sarah Wilson', 'sarah.wilson@klinik.com', '$2a$10$XYZ789', '1985-03-25', 'Jl. Melati No. 15', '081234567891', 'dokter'),
+(11, 'Dr. Michael Chen', 'michael.chen@klinik.com', '$2a$10$ABC101', '1982-07-12', 'Jl. Anggrek No. 8', '081234567892', 'dokter'),
+(12, 'Dr. Amanda Lopez', 'amanda.lopez@klinik.com', '$2a$10$DEF102', '1988-11-30', 'Jl. Mawar No. 22', '081234567893', 'dokter'),
+(13, 'Dr. David Kim', 'david.kim@klinik.com', '$2a$10$GHI103', '1979-09-05', 'Jl. Dahlia No. 45', '081234567894', 'dokter'),
+(14, 'sava', 'sava@gmail.com', '', '2012-12-12', 'koper', '0822', 'pasien');
 
 --
 -- Indexes for dumped tables
@@ -194,13 +212,13 @@ ALTER TABLE `user`
 -- AUTO_INCREMENT for table `booking`
 --
 ALTER TABLE `booking`
-  MODIFY `idBooking` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `idBooking` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `jadwal_dokter`
 --
 ALTER TABLE `jadwal_dokter`
-  MODIFY `idJadwal` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `idJadwal` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT for table `riwayat_medis`
@@ -218,7 +236,7 @@ ALTER TABLE `transaksi`
 -- AUTO_INCREMENT for table `user`
 --
 ALTER TABLE `user`
-  MODIFY `idUser` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `idUser` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- Constraints for dumped tables
