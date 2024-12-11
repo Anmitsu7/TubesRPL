@@ -5,6 +5,7 @@ import path from 'path';
 import bcrypt from 'bcryptjs';
 import session from 'express-session';
 import flash from 'express-flash';
+import crypto from 'crypto'; // Menambahkan modul bawaan crypto
 
 const app = express();
 const PORT = process.env.PORT || 3000;
