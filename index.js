@@ -5,10 +5,45 @@ import path from 'path';
 import bcrypt from 'bcryptjs';
 import session from 'express-session';
 import flash from 'express-flash';
-import crypto from 'crypto'; // Menambahkan modul bawaan crypto
+import crypto from 'crypto';
+import mysqlSession from 'express-mysql-session';
 
+const MySQLStore = mysqlSession(session);
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Database Configuration
+const dbConfig = {
+  connectionLimit: 10,
+  host: 'localhost', 
+  user: 'root',
+  password: '',
+  database: 'klinikrpl2'
+};
+
+// Create MySQL session store
+const sessionStore = new MySQLStore({
+  ...dbConfig,
+  clearExpired: true,
+  checkExpirationInterval: 900000,
+  expiration: 86400000,
+  createDatabaseTable: true
+});
+
+// Session Configuration yang lebih baik
+app.use(session({
+  key: 'klinik_session',
+  secret: crypto.randomBytes(32).toString('hex'), // Secret key yang lebih aman
+  store: sessionStore,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: false, // Set true jika menggunakan HTTPS
+    httpOnly: true,
+    maxAge: 86400000, // 24 jam
+    sameSite: 'strict'
+  }
+}));
 
 // Static file path
 const __dirname = path.resolve();
@@ -19,38 +54,22 @@ app.set('view engine', 'ejs');
 // Middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-
-// Session Configuration
-app.use(session({
-  secret: 'your_secret_key',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: false,
-    maxAge: 3600000 
-  }
-}));
-
-//flash message middleware
 app.use(flash());
 
 // Database Connection Pool
-const pool = mysql.createPool({
-  connectionLimit: 10,
-  host: 'localhost', 
-  user: 'root',
-  password: '',
-  database: 'klinikrpl2'
-});
+const pool = mysql.createPool(dbConfig);
 
-// Middleware to check authentication
+// Middleware untuk cek authentication dengan pesan yang lebih informatif
 const isAuthenticated = (req, res, next) => {
   if (req.session.user) {
     next();
   } else {
+    req.flash('error', 'Silakan login terlebih dahulu');
     res.redirect('/login');
   }
 };
+
+//-------------------------------------------------------------------------------------------------
 
 // Root Route
 app.get('/', (req, res) => {
@@ -70,12 +89,12 @@ app.post('/login', (req, res) => {
 
   pool.query('SELECT * FROM user WHERE email = ?', [email], (err, results) => {
     if (err) {
-      req.flash('error', 'Server error');
+      req.flash('error', 'Terjadi kesalahan server');
       return res.redirect('/login');
     }
 
     if (results.length === 0) {
-      req.flash('error', 'User tidak ditemukan!');
+      req.flash('error', 'Email tidak terdaftar');
       return res.redirect('/login');
     }
 
@@ -100,21 +119,48 @@ app.post('/login', (req, res) => {
     validatePassword(password)
       .then(isMatch => {
         if (isMatch) {
+          // Simpan data user ke session
           req.session.user = {
             idUser: user.idUser,
             namaUser: user.namaUser,
             email: user.email,
             role: user.role
           };
-          res.redirect('/dashboard');
+
+          // Simpan session ke database
+          req.session.save(err => {
+            if (err) {
+              console.error('Session save error:', err);
+              req.flash('error', 'Terjadi kesalahan saat login');
+              return res.redirect('/login');
+            }
+            
+            // Redirect berdasarkan role
+            switch(user.role) {
+              case 'admin':
+                res.redirect('/halaman-admin');
+                break;
+              case 'dokter':
+                res.redirect('/dokter/dashboard');
+                break;
+              case 'perawat':
+                res.redirect('/perawat/dashboard');
+                break;
+              case 'pasien':
+                res.redirect('/dashboard');
+                break;
+              default:
+                res.redirect('/dashboard');
+            }
+          });
         } else {
-          req.flash('error', 'Password salah!');
+          req.flash('error', 'Password salah');
           res.redirect('/login');
         }
       })
       .catch(err => {
-        console.error(err);
-        req.flash('error', 'Server error');
+        console.error('Login error:', err);
+        req.flash('error', 'Terjadi kesalahan saat login');
         res.redirect('/login');
       });
   });
@@ -543,12 +589,129 @@ app.post('/admin/tambah-jadwal', isAuthenticated, (req, res) => {
     kuotaOffline
   ], (err) => {
     if (err) {
+      console.error('Error:', err); // Tambahkan log error
       req.flash('error', 'Gagal menambah jadwal dokter');
       return res.redirect('/admin/kelola-jadwal-dokter');
     }
 
     req.flash('success', 'Jadwal dokter berhasil ditambahkan');
     res.redirect('/admin/kelola-jadwal-dokter');
+  });
+});
+
+app.post('/admin/update-jadwal', isAuthenticated, (req, res) => {
+  if (req.session.user.role !== 'admin') {
+    return res.redirect('/dashboard');
+  }
+
+  const { idJadwal, dokterId, hari, jamMulai, jamSelesai, kuotaOnline, kuotaOffline } = req.body;
+
+  const query = `
+    UPDATE jadwal_dokter 
+    SET dokterId = ?, 
+        hari = ?, 
+        jamMulai = ?, 
+        jamSelesai = ?, 
+        kuotaOnline = ?, 
+        kuotaOffline = ?,
+        sisaKuotaOnline = ?,
+        sisaKuotaOffline = ?
+    WHERE idJadwal = ?
+  `;
+
+  pool.query(query, [
+    dokterId,
+    hari,
+    jamMulai,
+    jamSelesai,
+    kuotaOnline,
+    kuotaOffline,
+    kuotaOnline,
+    kuotaOffline,
+    idJadwal
+  ], (err) => {
+    if (err) {
+      req.flash('error', 'Gagal mengupdate jadwal dokter');
+      return res.redirect('/admin/kelola-jadwal-dokter');
+    }
+
+    req.flash('success', 'Jadwal dokter berhasil diupdate');
+    res.redirect('/admin/kelola-jadwal-dokter');
+  });
+});
+
+app.post('/admin/delete-jadwal', isAuthenticated, (req, res) => {
+  if (req.session.user.role !== 'admin') {
+    return res.redirect('/dashboard');
+  }
+
+  const { idJadwal } = req.body;
+
+  // Check if there are any active bookings for this schedule
+  const checkBookingQuery = `
+    SELECT COUNT(*) as bookingCount 
+    FROM booking 
+    WHERE jadwalId = ? AND status = 'aktif'
+  `;
+
+  pool.getConnection((err, connection) => {
+    if(err) {
+      req.flash('error', 'Terjadi kesalahan koneksi database');
+      return res.redirect('/admin/kelola-jadwal-dokter');
+    }
+
+    connection.beginTransaction(err => {
+      if(err) {
+        connection.release();
+        req.flash('error', 'Terjadi kesalahan saat memulai transaksi');
+        return res.redirect('/admin/kelola-jadwal-dokter');
+      }
+
+      // First check for active bookings
+      connection.query(checkBookingQuery, [idJadwal], (err, results) => {
+        if(err) {
+          return connection.rollback(() => {
+            connection.release();
+            req.flash('error', 'Terjadi kesalahan saat memeriksa booking aktif');
+            res.redirect('/admin/kelola-jadwal-dokter');
+          });
+        }
+
+        if(results[0].bookingCount > 0) {
+          return connection.rollback(() => {
+            connection.release();
+            req.flash('error', 'Tidak dapat menghapus jadwal karena masih ada booking aktif');
+            res.redirect('/admin/kelola-jadwal-dokter');
+          });
+        }
+
+        // If no active bookings, proceed with deletion
+        const deleteQuery = 'DELETE FROM jadwal_dokter WHERE idJadwal = ?';
+        connection.query(deleteQuery, [idJadwal], (err) => {
+          if(err) {
+            return connection.rollback(() => {
+              connection.release();
+              req.flash('error', 'Gagal menghapus jadwal dokter');
+              res.redirect('/admin/kelola-jadwal-dokter');
+            });
+          }
+
+          connection.commit(err => {
+            if(err) {
+              return connection.rollback(() => {
+                connection.release();
+                req.flash('error', 'Terjadi kesalahan saat menyimpan perubahan');
+                res.redirect('/admin/kelola-jadwal-dokter');
+              });
+            }
+
+            connection.release();
+            req.flash('success', 'Jadwal dokter berhasil dihapus');
+            res.redirect('/admin/kelola-jadwal-dokter');
+          });
+        });
+      });
+    });
   });
 });
 
@@ -1195,6 +1358,10 @@ app.post('/halaman-perawat', (req, res) => {
   });
 });
 
+
+
+
+//-------------------------------------------------------------------------------------------------
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
