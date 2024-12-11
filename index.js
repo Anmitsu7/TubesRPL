@@ -776,6 +776,424 @@ app.post('/booking', isAuthenticated, (req, res) => {
   });
 });
 
+
+
+//-------------------------------------------------------------------------------------------------
+//rute dokter
+app.get('/halaman-dokter', async (req, res) => {
+  try {
+    // Cek session
+    if (!req.session.user) {
+      return res.redirect('/login');
+    }
+
+    const dokterId = req.session.user.idUser;
+
+    // Query untuk data dokter dengan pengecekan role yang lebih detail
+    const queryDokter = `
+      SELECT 
+        idUser,
+        namaUser as namaDokter,
+        email,
+        tanggalLahir,
+        alamat,
+        nomorTelepon,
+        role 
+      FROM user 
+      WHERE idUser = ? AND role = 'dokter'
+    `;
+
+    // Query untuk daftar pasien hari ini
+    const queryPasien = `
+      SELECT 
+        u.namaUser as pasien,
+        u.nomorTelepon,
+        b.tanggalBooking,
+        b.metodePendaftaran,
+        b.status,
+        b.nomorAntrian,
+        b.statusAntrian 
+      FROM booking b
+      JOIN user u ON b.pasienId = u.idUser
+      JOIN jadwal_dokter jd ON b.jadwalId = jd.idJadwal
+      WHERE jd.dokterId = ?
+      AND DATE(b.tanggalBooking) = CURDATE() 
+      AND b.status = 'aktif'
+      ORDER BY b.nomorAntrian ASC
+    `;
+
+    // Query untuk jadwal dokter
+    const queryJadwal = `
+      SELECT 
+        idJadwal,
+        hari,
+        jamMulai,
+        jamSelesai 
+      FROM jadwal_dokter 
+      WHERE dokterId = ?
+      ORDER BY 
+        CASE
+          WHEN hari = 'Senin' THEN 1
+          WHEN hari = 'Selasa' THEN 2
+          WHEN hari = 'Rabu' THEN 3
+          WHEN hari = 'Kamis' THEN 4
+          WHEN hari = 'Jumat' THEN 5
+          WHEN hari = 'Sabtu' THEN 6
+          WHEN hari = 'Minggu' THEN 7
+        END ASC
+    `;
+
+    // Membuat fungsi query dengan Promise
+    const queryAsync = (query, params) => {
+      return new Promise((resolve, reject) => {
+        pool.query(query, params, (err, results) => {
+          if (err) reject(err);
+          else resolve(results);
+        });
+      });
+    };
+
+    // Eksekusi query dokter
+    const dokterResult = await queryAsync(queryDokter, [dokterId]);
+
+    // Validasi dokter
+    if (dokterResult.length === 0) {
+      return res.status(403).send('Akses ditolak: Anda tidak memiliki akses sebagai dokter');
+    }
+
+    // Eksekusi query pasien dan jadwal
+    const [pasienResult, jadwalResult] = await Promise.all([
+      queryAsync(queryPasien, [dokterId]),
+      queryAsync(queryJadwal, [dokterId])
+    ]);
+
+    // Format tanggal lahir
+    if (dokterResult[0].tanggalLahir) {
+      dokterResult[0].tanggalLahir = new Date(dokterResult[0].tanggalLahir)
+        .toLocaleDateString('id-ID', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        });
+    }
+
+    // Format tanggal booking
+    const formattedPasienResult = pasienResult.map(pasien => ({
+      ...pasien,
+      tanggalBooking: pasien.tanggalBooking
+        ? new Date(pasien.tanggalBooking)
+          .toLocaleDateString('id-ID', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        : null
+    }));
+
+    // Render halaman dengan semua data
+    res.render('dokter/halaman-dokter', {
+      user: req.session.user,
+      daftarPasien: formattedPasienResult,
+      jadwal: jadwalResult,
+      dokter: dokterResult[0]
+    });
+
+  } catch (error) {
+    console.error('Unexpected error:', error);
+    res.status(500).send('Terjadi kesalahan yang tidak terduga');
+  }
+});
+
+app.get('/diagnosa', (req, res) => {
+  // Cek apakah user sudah login
+  if (!req.session.user) {
+    return res.redirect('/login');
+  }
+
+  // Jika user adalah dokter, lanjutkan
+  if (req.session.user.role !== 'dokter') {
+    return res.status(403).send('Akses ditolak');
+  }
+
+  // Query untuk mengambil data hasil diagnosa
+  const query = `
+    SELECT 
+      rm.idRiwayatMedis,
+      u.namaUser as namaPasien,
+      rm.tanggal,
+      rm.diagnosa,
+      rm.resep,
+      rm.catatan
+    FROM riwayat_medis rm
+    JOIN user u ON rm.idPasien = u.idUser
+    ORDER BY rm.tanggal DESC
+  `;
+
+  pool.query(query, (err, results) => {
+    if (err) {
+      console.error('Error fetching diagnosa:', err);
+      return res.status(500).send('Terjadi kesalahan saat mengambil data');
+    }
+
+    // Format tanggal untuk setiap hasil
+    const formattedResults = results.map(result => ({
+      ...result,
+      tanggal: new Date(result.tanggal).toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    }));
+
+    // Render halaman dengan data
+    res.render('dokter/diagnosa', {
+      user: req.session.user,
+      hasilDiagnosa: formattedResults
+    });
+  });
+});
+app.post('catat-obat', (req, res) => {
+  // Cek session
+  if (!req.session.user) {
+    return res.redirect('/login');
+  }
+
+  // Cek role
+  if (req.session.user.role !== 'dokter') {
+    return res.status(403).send('Akses ditolak: Hanya dokter yang dapat mencatat obat');
+  }
+
+  // Dapatkan pasienId dari tombol submit
+  const pasienId = req.body.submit;
+  const obat = req.body[`obat_${pasienId}`];
+
+  // Validasi input
+  if (!pasienId || !obat) {
+    return res.status(400).send('Data tidak lengkap');
+  }
+
+  // Query untuk mencatat obat ke riwayat medis
+  const queryCatatObat = `
+    INSERT INTO riwayat_medis 
+    (idPasien, tanggal, resep, catatan) 
+    VALUES 
+    (?, NOW(), ?, 'Obat diberikan oleh dokter')
+  `;
+
+  pool.query(queryCatatObat, [pasienId, obat], (err, result) => {
+    if (err) {
+      console.error('Error mencatat obat:', err);
+      return res.status(500).send('Terjadi kesalahan saat mencatat obat');
+    }
+
+    // Update status booking jika diperlukan
+    const queryUpdateBooking = `
+      UPDATE booking 
+      SET status = 'selesai' 
+      WHERE pasienId = ? AND DATE(tanggalBooking) = CURDATE()
+    `;
+
+    pool.query(queryUpdateBooking, [pasienId], (updateErr) => {
+      if (updateErr) {
+        console.error('Error update status booking:', updateErr);
+      }
+
+      // Redirect dengan pesan sukses
+      req.flash('success', 'Obat berhasil dicatat');
+      res.redirect('/dokter/catat-obat');
+    });
+  });
+});
+
+// Rute untuk halaman catat obat khusus dokter
+app.get('/catat-obat', (req, res) => {
+  // Cek session
+  if (!req.session.user) {
+    return res.redirect('/login');
+  }
+
+  // Cek role (pastikan hanya dokter yang bisa akses)
+  if (req.session.user.role !== 'dokter') {
+    return res.status(403).send('Akses ditolak: Hanya dokter yang dapat mengakses halaman ini');
+  }
+
+  // Query untuk mendapatkan daftar pasien hari ini
+  const queryPasien = `
+    SELECT 
+      u.idUser as pasienId,
+      u.namaUser as pasien,
+      b.idBooking,
+      b.tanggalBooking
+    FROM booking b
+    JOIN user u ON b.pasienId = u.idUser
+    WHERE DATE(b.tanggalBooking) = CURDATE() 
+    AND b.status = 'aktif'
+    ORDER BY b.tanggalBooking
+  `;
+
+  pool.query(queryPasien, (err, daftarPasien) => {
+    if (err) {
+      console.error('Error mengambil daftar pasien:', err);
+      return res.status(500).send('Terjadi kesalahan saat mengambil daftar pasien');
+    }
+
+    // Format tanggal untuk setiap pasien
+    const formattedPasien = daftarPasien.map(pasien => ({
+      ...pasien,
+      tanggalBooking: new Date(pasien.tanggalBooking)
+        .toLocaleDateString('id-ID', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        })
+    }));
+
+    // Render halaman catat obat
+    res.render('dokter/catat-obat', {
+      user: req.session.user,
+      daftarPasien: formattedPasien
+    });
+  });
+});
+
+app.get('/lihat-jadwal-pasien', (req, res) => {
+  try {
+    const dokterId = req.query.dokterId;
+
+    // Debug: cek apakah dokterId ada dalam query string
+    console.log('dokterId:', dokterId);
+
+    // Validasi input dokterId
+    if (!dokterId) {
+      return res.render('dokter/lihat-jadwal-pasien', {
+        user: req.session.user || {},
+        jadwalPasien: [],
+        totalPasien: 0,
+        pesan: 'Dokter ID tidak boleh kosong, silakan pilih dokter terlebih dahulu.'
+      });
+    }
+
+    // Query untuk mendapatkan jadwal pasien dengan informasi lengkap
+    const query = `
+      SELECT 
+        u.namaUser AS pasien, 
+        u.nomorTelepon AS teleponPasien,
+        b.tanggalBooking, 
+        b.metodePendaftaran, 
+        b.nomorAntrian, 
+        b.statusAntrian,
+        jd.hari,
+        jd.jamMulai,
+        jd.jamSelesai,
+        dok.namaUser AS namaDokter
+      FROM booking b
+      JOIN user u ON b.pasienId = u.idUser
+      JOIN jadwal_dokter jd ON b.jadwalId = jd.idJadwal
+      JOIN user dok ON jd.dokterId = dok.idUser
+      WHERE jd.dokterId = ? 
+        AND DATE(b.tanggalBooking) = CURDATE()
+      ORDER BY b.tanggalBooking;
+    `;
+
+    pool.query(query, [dokterId], (err, hasil) => {
+      if (err) {
+        console.error('Database error:', err);
+        return res.status(500).render('error', {
+          message: 'Kesalahan server: Gagal mengambil jadwal pasien',
+          user: req.session.user || {}
+        });
+      }
+
+      // Proses data untuk tampilan
+      const jadwalPasien = hasil.map(item => ({
+        namaPasien: item.pasien,
+        teleponPasien: item.teleponPasien,
+        tanggalBooking: moment(item.tanggalBooking).format('DD MMMM YYYY HH:mm'),
+        metodePendaftaran: item.metodePendaftaran,
+        nomorAntrian: item.nomorAntrian || 'Belum ditentukan',
+        statusAntrian: item.statusAntrian,
+        hari: item.hari,
+        jamMulai: item.jamMulai,
+        jamSelesai: item.jamSelesai,
+        namaDokter: item.namaDokter
+      }));
+
+      // Render halaman dengan data
+      res.render('dokter/lihat-jadwal-pasien', {
+        user: req.session.user || {},
+        jadwalPasien: jadwalPasien,
+        totalPasien: jadwalPasien.length,
+        pesan: jadwalPasien.length === 0 ? 'Tidak ada jadwal pasien hari ini.' : null
+      });
+    });
+  } catch (error) {
+    console.error('Unexpected error:', error);
+    res.status(500).render('error', {
+      message: 'Terjadi kesalahan tidak terduga',
+      user: req.session.user || {}
+    });
+  }
+});
+
+
+//-------------------------------------------------------------------------------------------------
+//halaman perawat
+app.post('/halaman-perawat', (req, res) => {
+  // Pastikan hanya perawat yang bisa mengakses
+  if (req.session.role !== 'perawat') {
+      return res.status(403).json({ success: false, message: 'Unauthorized' });
+  }
+
+  const { bookingId, currentStatus } = req.body;
+  let newStatus;
+
+  // Logika perubahan status
+  switch(currentStatus) {
+      case 'menunggu':
+          newStatus = 'dipanggil';
+          break;
+      case 'dipanggil':
+          newStatus = 'selesai';
+          break;
+      default:
+          return res.status(400).json({ success: false, message: 'Invalid status' });
+  }
+
+  const query = 'UPDATE booking SET statusAntrian = ? WHERE idBooking = ?';
+  
+  pool.query(query, [newStatus, bookingId], (error, result) => {
+      if (error) {
+          console.error('Error updating booking status:', error);
+          return res.status(500).json({ success: false, message: 'Server error' });
+      }
+
+      // Log perubahan status
+      const logQuery = `
+          INSERT INTO log_status_booking 
+          (bookingId, statusLama, statusBaru, petugasId, waktuPerubahan) 
+          VALUES (?, ?, ?, ?, NOW())
+      `;
+      pool.query(logQuery, [bookingId, currentStatus, newStatus, req.session.idUser]);
+
+      // Jika request adalah AJAX, kirim JSON
+      if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+          return res.json({ 
+              success: true, 
+              message: 'Status berhasil diupdate', 
+              newStatus: newStatus 
+          });
+      }
+
+      // Jika bukan AJAX, redirect kembali ke halaman
+      req.flash('success', 'Status booking berhasil diperbarui');
+      res.redirect('/halaman-perawat');
+  });
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
