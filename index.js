@@ -10,10 +10,10 @@ const PORT = process.env.PORT || 3000;
 
 // Static file path
 const __dirname = path.resolve();
- app.use(express.static(path.join(__dirname, 'public')));
- app.set('views', path.join(__dirname, 'views'));
- app.set('view engine', 'ejs');
- 
+app.use(express.static(path.join(__dirname, 'public')));
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');
+
 
 // Middleware
 app.use(bodyParser.json());
@@ -96,7 +96,7 @@ app.post('/login', (req, res) => {
           });
         });
       }
-      
+
       // Jika password plain text
       return Promise.resolve(inputPassword === storedPassword);
     };
@@ -130,7 +130,7 @@ app.get('/dashboard', (req, res) => {
   if (!req.session.user) {
     return res.redirect('/login'); // Jika tidak ada session user, redirect ke login
   }
-  
+
   // Jika session ada, tampilkan dashboard
   res.render('dashboard', { user: req.session.user });
 });
@@ -270,8 +270,8 @@ app.post('/booking', isAuthenticated, (req, res) => {
     }
 
     // Proses booking dan update kuota
-    const updateJadwalQuery = metodePendaftaran === 'online' 
-      ? 'UPDATE jadwal_dokter SET sisaKuotaOnline = sisaKuotaOnline - 1 WHERE idJadwal = ?' 
+    const updateJadwalQuery = metodePendaftaran === 'online'
+      ? 'UPDATE jadwal_dokter SET sisaKuotaOnline = sisaKuotaOnline - 1 WHERE idJadwal = ?'
       : 'UPDATE jadwal_dokter SET sisaKuotaOffline = sisaKuotaOffline - 1 WHERE idJadwal = ?';
 
     const insertBookingQuery = `
@@ -361,9 +361,9 @@ app.get('/admin/kelola-antrian', isAuthenticated, (req, res) => {
         return res.status(500).send('Server error');
       }
 
-      res.render('admin/kelola-antrian', { 
-        user: req.session.user, 
-        bookings, 
+      res.render('admin/kelola-antrian', {
+        user: req.session.user,
+        bookings,
         metodePendaftaran,
         jadwalDokter
       });
@@ -411,7 +411,7 @@ app.post('/admin/assign-antrian', isAuthenticated, (req, res) => {
           ${metodePendaftaran === 'online' ? 'sisaKuotaOnline' : 'sisaKuotaOffline'} - 1 
           WHERE idJadwal = (SELECT jadwalId FROM booking WHERE idBooking = ?)
         `;
-        
+
         connection.query(updateKuotaQuery, [bookingId], (err) => {
           if (err) {
             return connection.rollback(() => {
@@ -469,9 +469,9 @@ app.get('/admin/daftar-pasien-offline', isAuthenticated, (req, res) => {
       console.error(err);
       return res.status(500).send('Server error');
     }
-    
-    res.render('admin/daftar-pasien-offline', { 
-      user: req.session.user, 
+
+    res.render('admin/daftar-pasien-offline', {
+      user: req.session.user,
       doctors: doctors
     });
   });
@@ -506,7 +506,7 @@ app.post('/admin/daftar-pasien-offline', isAuthenticated, (req, res) => {
           console.error(err);
           return res.status(500).send('Error creating booking');
         }
-        
+
         // Update doctor's schedule quota
         const updateQuotaQuery = 'UPDATE jadwal_dokter SET sisaKuotaOffline = sisaKuotaOffline - 1 WHERE idJadwal = ?';
         pool.query(updateQuotaQuery, [jadwalId], (err) => {
@@ -589,10 +589,10 @@ app.get('/admin/kelola-jadwal-dokter', isAuthenticated, (req, res) => {
         console.error(err);
         return res.status(500).send('Server error');
       }
-      res.render('admin/kelola-jadwal-dokter', { 
-        user: req.session.user, 
+      res.render('admin/kelola-jadwal-dokter', {
+        user: req.session.user,
         schedules,
-        doctors 
+        doctors
       });
     });
   });
@@ -612,11 +612,11 @@ app.post('/admin/tambah-jadwal', isAuthenticated, (req, res) => {
   `;
 
   pool.query(query, [
-    dokterId, 
-    hari, 
-    jamMulai, 
-    jamSelesai, 
-    kuotaOnline, 
+    dokterId,
+    hari,
+    jamMulai,
+    jamSelesai,
+    kuotaOnline,
     kuotaOffline,
     kuotaOnline,
     kuotaOffline
@@ -645,11 +645,11 @@ app.post('/admin/update-jadwal', isAuthenticated, (req, res) => {
   `;
 
   pool.query(query, [
-    jamMulai, 
-    jamSelesai, 
-    kuotaOnline, 
+    jamMulai,
+    jamSelesai,
     kuotaOnline,
-    kuotaOffline, 
+    kuotaOnline,
+    kuotaOffline,
     kuotaOffline,
     idJadwal
   ], (err) => {
@@ -690,12 +690,12 @@ app.post('/admin/proses-transaksi', isAuthenticated, (req, res) => {
     return res.redirect('/dashboard');
   }
 
-  const { 
-    idTransaksi, 
-    metodePembayaran, 
-    biayaKonsultasi, 
-    biayaTindakan, 
-    status 
+  const {
+    idTransaksi,
+    metodePembayaran,
+    biayaKonsultasi,
+    biayaTindakan,
+    status
   } = req.body;
 
   const query = `
@@ -713,12 +713,12 @@ app.post('/admin/proses-transaksi', isAuthenticated, (req, res) => {
   const totalBiaya = parseFloat(biayaKonsultasi) + parseFloat(biayaTindakan);
 
   pool.query(query, [
-    metodePembayaran, 
-    biayaKonsultasi, 
-    biayaTindakan, 
-    biayaKonsultasi, 
-    biayaTindakan, 
-    status, 
+    metodePembayaran,
+    biayaKonsultasi,
+    biayaTindakan,
+    biayaKonsultasi,
+    biayaTindakan,
+    status,
     idTransaksi
   ], (err) => {
     if (err) {
@@ -728,6 +728,9 @@ app.post('/admin/proses-transaksi', isAuthenticated, (req, res) => {
     res.redirect('/admin/transaksi');
   });
 });
+
+//-------------------------------------------------------------------------------------------------
+//rute dokter
 app.get('/halaman-dokter', async (req, res) => {
   try {
     // Cek session
@@ -736,7 +739,7 @@ app.get('/halaman-dokter', async (req, res) => {
     }
 
     const dokterId = req.session.user.idUser;
-    
+
     // Query untuk data dokter dengan pengecekan role yang lebih detail
     const queryDokter = `
       SELECT 
@@ -828,7 +831,7 @@ app.get('/halaman-dokter', async (req, res) => {
     // Format tanggal booking
     const formattedPasienResult = pasienResult.map(pasien => ({
       ...pasien,
-      tanggalBooking: pasien.tanggalBooking 
+      tanggalBooking: pasien.tanggalBooking
         ? new Date(pasien.tanggalBooking)
           .toLocaleDateString('id-ID', {
             day: 'numeric',
@@ -1010,7 +1013,7 @@ app.get('/catat-obat', (req, res) => {
 
 app.get('/lihat-jadwal-pasien', (req, res) => {
   try {
-    const dokterId = req.query.dokterId;  
+    const dokterId = req.query.dokterId;
 
     // Debug: cek apakah dokterId ada dalam query string
     console.log('dokterId:', dokterId);
