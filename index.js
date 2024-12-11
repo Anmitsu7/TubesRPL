@@ -4,6 +4,8 @@ import mysql from 'mysql';
 import path from 'path';
 import bcrypt from 'bcryptjs';
 import session from 'express-session';
+import flash from 'express-flash';
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -29,6 +31,9 @@ app.use(session({
     maxAge: 3600000 // 1 jam
   }
 }));
+
+//flash message middleware
+app.use(flash());
 
 
 // Database Connection Pool
@@ -441,122 +446,129 @@ app.post('/admin/assign-antrian', isAuthenticated, (req, res) => {
 });
 
 //registrasi pasien offline
-app.get('/admin/daftar-pasien-offline', isAuthenticated, (req, res) => {
+app.get('/admin/daftar-pasien-offline', isAuthenticated, async (req, res) => {
   if (req.session.user.role !== 'admin') {
     return res.redirect('/dashboard');
   }
 
-  // Fetch doctors with their schedules
-  const query = `
-    SELECT u.idUser, u.namaUser, 
-           GROUP_CONCAT(
-             CONCAT(j.hari, ': ', 
-                    TIME_FORMAT(j.jamMulai, '%H:%i'), 
-                    ' - ', 
-                    TIME_FORMAT(j.jamSelesai, '%H:%i'), 
-                    ' (Sisa Kuota Offline: ', 
-                    j.sisaKuotaOffline, ')'
-             ) SEPARATOR '; '
-           ) AS jadwal
-    FROM user u
-    LEFT JOIN jadwal_dokter j ON u.idUser = j.dokterId
-    WHERE u.role = 'dokter'
-    GROUP BY u.idUser, u.namaUser
-  `;
+  try {
+    // Dapatkan hari ini dalam bahasa Indonesia
+    const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const today = days[new Date().getDay()];
 
-  pool.query(query, (err, doctors) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).send('Server error');
-    }
+    // Query untuk mendapatkan hanya dokter yang memiliki jadwal hari ini
+    const query = `
+        SELECT DISTINCT u.idUser, u.namaUser, 
+               GROUP_CONCAT(
+                 CONCAT(
+                   TIME_FORMAT(j.jamMulai, '%H:%i'), 
+                   ' - ', 
+                   TIME_FORMAT(j.jamSelesai, '%H:%i')
+                 )
+               ) as jadwalHariIni
+        FROM user u
+        INNER JOIN jadwal_dokter j ON u.idUser = j.dokterId
+        WHERE u.role = 'dokter' 
+        AND j.hari = ?
+        AND j.sisaKuotaOffline > 0
+        GROUP BY u.idUser, u.namaUser
+    `;
+
+    const [doctors] = await pool.query(query, [today]);
 
     res.render('admin/daftar-pasien-offline', {
       user: req.session.user,
-      doctors: doctors
+      doctors: doctors,
+      today: today,
+      success: req.flash('success'),
+      error: req.flash('error')
     });
-  });
+  } catch (error) {
+    console.error('Error:', error);
+    req.flash('error', 'Terjadi kesalahan saat memuat data');
+    res.redirect('/admin/dashboard');
+  }
 });
 
-app.post('/admin/daftar-pasien-offline', isAuthenticated, (req, res) => {
+app.post('/admin/daftar-pasien-offline', isAuthenticated, async (req, res) => {
   if (req.session.user.role !== 'admin') {
     return res.redirect('/dashboard');
   }
 
-  const { namaUser, email, tanggalLahir, alamat, nomorTelepon, dokterId, jadwalId } = req.body;
+  const connection = await pool.getConnection();
 
-  // First, check if user exists
-  pool.query('SELECT * FROM user WHERE email = ?', [email], (err, existingUser) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).send('Server error');
-    }
+  try {
+    await connection.beginTransaction();
 
-    const registerPatient = (userId) => {
-      // Create booking
-      const bookingQuery = `
-        INSERT INTO booking (pasienId, jadwalId, tanggalBooking, metodePendaftaran, status, nomorAntrian) 
-        VALUES (?, ?, NOW(), 'offline', 'aktif', ?)
-      `;
+    const { namaUser, email, tanggalLahir, alamat, nomorTelepon, jadwalId } = req.body;
 
-      // Generate a simple queue number
-      const nomorAntrian = `A${Math.floor(Math.random() * 100)}`;
+    // 1. Insert data pasien baru
+    const insertUserQuery = `
+      INSERT INTO user (namaUser, email, password, tanggalLahir, alamat, nomorTelepon, role) 
+      VALUES (?, ?, ?, ?, ?, ?, 'pasien')
+    `;
+    const hashedPassword = await bcrypt.hash(nomorTelepon, 10);
 
-      pool.query(bookingQuery, [userId, jadwalId, nomorAntrian], (err) => {
-        if (err) {
-          console.error(err);
-          return res.status(500).send('Error creating booking');
-        }
+    const [userResult] = await connection.query(insertUserQuery, [
+      namaUser,
+      email,
+      hashedPassword,
+      tanggalLahir,
+      alamat,
+      nomorTelepon
+    ]);
 
-        // Update doctor's schedule quota
-        const updateQuotaQuery = 'UPDATE jadwal_dokter SET sisaKuotaOffline = sisaKuotaOffline - 1 WHERE idJadwal = ?';
-        pool.query(updateQuotaQuery, [jadwalId], (err) => {
-          if (err) {
-            console.error(err);
-          }
-          res.redirect('/admin/daftar-pasien-offline');
-        });
-      });
-    };
+    const pasienId = userResult.insertId;
 
-    if (existingUser.length === 0) {
-      // Create new user if not exists
-      const insertUserQuery = 'INSERT INTO user (namaUser, email, tanggalLahir, alamat, nomorTelepon, role) VALUES (?, ?, ?, ?, ?, "pasien")';
-      pool.query(insertUserQuery, [namaUser, email, tanggalLahir, alamat, nomorTelepon], (err, result) => {
-        if (err) {
-          console.error(err);
-          return res.status(500).send('Error registering patient');
-        }
-        registerPatient(result.insertId);
-      });
-    } else {
-      registerPatient(existingUser[0].idUser);
-    }
-  });
+    // 2. Insert booking tanpa nomor antrian
+    const insertBookingQuery = `
+      INSERT INTO booking (pasienId, jadwalId, tanggalBooking, metodePendaftaran, status, nomorAntrian, statusAntrian)
+      VALUES (?, ?, NOW(), 'offline', 'aktif', NULL, 'menunggu')
+    `;
+
+    await connection.query(insertBookingQuery, [pasienId, jadwalId]);
+
+    // 3. Update sisa kuota offline
+    const updateKuotaQuery = `
+      UPDATE jadwal_dokter 
+      SET sisaKuotaOffline = sisaKuotaOffline - 1 
+      WHERE idJadwal = ? AND sisaKuotaOffline > 0
+    `;
+
+    await connection.query(updateKuotaQuery, [jadwalId]);
+
+    await connection.commit();
+
+    req.flash('success', 'Pasien berhasil didaftarkan! Silahkan atur nomor antrian di halaman Manage Queue');
+    res.redirect('/admin/kelola-antrian?metode=offline');
+
+  } catch (error) {
+    await connection.rollback();
+    console.error('Error in patient registration:', error);
+    req.flash('error', 'Terjadi kesalahan saat mendaftarkan pasien');
+    res.redirect('/admin/daftar-pasien-offline');
+  } finally {
+    connection.release();
+  }
 });
 
-app.get('/admin/jadwal-dokter/:dokterId', isAuthenticated, (req, res) => {
-  if (req.session.user.role !== 'admin') {
-    return res.status(403).json({ error: 'Unauthorized' });
-  }
+// Endpoint untuk mendapatkan jadwal dokter specific di hari ini
+app.get('/admin/jadwal-dokter/:id', (req, res) => {
+  const dokterId = req.params.id;
+  const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+  const today = days[new Date().getDay()];
 
-  const dokterId = req.params.dokterId;
   const query = `
-    SELECT idJadwal, hari, 
-           TIME_FORMAT(jamMulai, '%H:%i') as jamMulai, 
-           TIME_FORMAT(jamSelesai, '%H:%i') as jamSelesai, 
-           sisaKuotaOffline,
-           CASE 
-             WHEN hari = DAYNAME(CURRENT_DATE) THEN 1 
-             ELSE 0 
-           END as isToday
+    SELECT idJadwal, jamMulai, jamSelesai, sisaKuotaOffline
     FROM jadwal_dokter 
-    WHERE dokterId = ? AND sisaKuotaOffline > 0
-    ORDER BY isToday DESC
+    WHERE dokterId = ? 
+    AND hari = ?
+    AND sisaKuotaOffline > 0
   `;
 
-  pool.query(query, [dokterId], (err, schedules) => {
+  pool.query(query, [dokterId, today], (err, schedules) => {
     if (err) {
-      console.error(err);
+      console.error('Error:', err);
       return res.status(500).json({ error: 'Server error' });
     }
     res.json(schedules);
