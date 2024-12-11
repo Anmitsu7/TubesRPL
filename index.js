@@ -1,11 +1,12 @@
-import express from 'express';
+import bcrypt from 'bcryptjs';
 import bodyParser from 'body-parser';
+import express from 'express';
+import session from 'express-session';
 import mysql from 'mysql';
 import path from 'path';
 import bcrypt from 'bcryptjs';
 import session from 'express-session';
 import flash from 'express-flash';
-
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -1102,7 +1103,133 @@ app.get('/lihat-jadwal-pasien', (req, res) => {
   }
 });
 
+app.get('/halaman-perawat', (req, res) => {
+  // Pastikan hanya perawat yang bisa mengakses
+  if (req.session.role !== 'perawat') {
+      return res.redirect('/login');
+  }
 
+  // Query untuk mendapatkan daftar antrian pasien yang menunggu
+  const queryBookings = `
+      SELECT 
+          b.idBooking, 
+          u.idUser as pasienId, 
+          u.namaUser as namaPasien, 
+          b.statusAntrian,
+          jd.hari,
+          jd.jamMulai,
+          jd.jamSelesai,
+          d.namaUser as namaDokter
+      FROM 
+          booking b
+      JOIN 
+          user u ON b.pasienId = u.idUser
+      JOIN
+          jadwal_dokter jd ON b.jadwalId = jd.idJadwal
+      JOIN 
+          user d ON jd.dokerId = d.idUser
+      WHERE 
+          b.statusAntrian IN ('menunggu', 'dipanggil')
+      ORDER BY 
+          b.statusAntrian = 'menunggu' DESC, 
+          b.idBooking
+  `;
+
+  // Query untuk mendapatkan total antrian hari ini
+  const queryTotalAntrian = `
+      SELECT 
+          COUNT(*) as totalAntrian,
+          SUM(CASE WHEN statusAntrian = 'menunggu' THEN 1 ELSE 0 END) as antrianMenunggu,
+          SUM(CASE WHEN statusAntrian = 'dipanggil' THEN 1 ELSE 0 END) as antrianDipanggil
+      FROM 
+          booking
+      WHERE 
+          DATE(tanggalBooking) = CURDATE()
+  `;
+
+  // Jalankan query secara paralel
+  Promise.all([
+      new Promise((resolve, reject) => {
+          pool.query(queryBookings, (error, bookings) => {
+              if (error) reject(error);
+              resolve(bookings);
+          });
+      }),
+      new Promise((resolve, reject) => {
+          pool.query(queryTotalAntrian, (error, totalAntrian) => {
+              if (error) reject(error);
+              resolve(totalAntrian[0]);
+          });
+      })
+  ])
+  .then(([bookings, totalAntrian]) => {
+      res.render('halaman-perawat', { 
+          bookings: bookings,
+          totalAntrian: totalAntrian,
+          user: req.session,
+          title: 'Halaman Perawat - Antrian Pasien'
+      });
+  })
+  .catch(error => {
+      console.error('Error fetching data:', error);
+      res.status(500).render('error', { 
+          message: 'Terjadi kesalahan server',
+          error: error
+      });
+  });
+});
+
+app.post('/halaman-perawat', (req, res) => {
+  // Pastikan hanya perawat yang bisa mengakses
+  if (req.session.role !== 'perawat') {
+      return res.status(403).json({ success: false, message: 'Unauthorized' });
+  }
+
+  const { bookingId, currentStatus } = req.body;
+  let newStatus;
+
+  // Logika perubahan status
+  switch(currentStatus) {
+      case 'menunggu':
+          newStatus = 'dipanggil';
+          break;
+      case 'dipanggil':
+          newStatus = 'selesai';
+          break;
+      default:
+          return res.status(400).json({ success: false, message: 'Invalid status' });
+  }
+
+  const query = 'UPDATE booking SET statusAntrian = ? WHERE idBooking = ?';
+  
+  pool.query(query, [newStatus, bookingId], (error, result) => {
+      if (error) {
+          console.error('Error updating booking status:', error);
+          return res.status(500).json({ success: false, message: 'Server error' });
+      }
+
+      // Log perubahan status
+      const logQuery = `
+          INSERT INTO log_status_booking 
+          (bookingId, statusLama, statusBaru, petugasId, waktuPerubahan) 
+          VALUES (?, ?, ?, ?, NOW())
+      `;
+      pool.query(logQuery, [bookingId, currentStatus, newStatus, req.session.idUser]);
+
+      // Jika request adalah AJAX, kirim JSON
+      if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+          return res.json({ 
+              success: true, 
+              message: 'Status berhasil diupdate', 
+              newStatus: newStatus 
+          });
+      }
+
+      // Jika bukan AJAX, redirect kembali ke halaman
+      req.flash('success', 'Status booking berhasil diperbarui');
+      res.redirect('/halaman-perawat');
+  });
+});
 //-------------------------------------------------------------------------------------------------
 
 // Start server
