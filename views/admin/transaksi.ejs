@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manajemen Transaksi</title>
     <%- include('partials/head') %>
 </head>
@@ -11,48 +13,102 @@
             
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
                 <%- include('partials/header', { pageTitle: 'Manajemen Transaksi', user: user }) %>
-                
+
+                <!-- Flash Messages -->
+                <% if (success && success.length > 0) { %>
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <%= success %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                <% } %>
+
+                <% if (error && error.length > 0) { %>
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <%= error %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                <% } %>
+
                 <div class="card shadow">
                     <div class="card-body">
-                        <table class="table table-striped table-hover">
-                            <thead>
-                                <tr>
-                                    <th>ID Transaksi</th>
-                                    <th>Nama Pasien</th>
-                                    <th>Nama Dokter</th>
-                                    <th>Tanggal</th>
-                                    <th>Status</th>
-                                    <th>Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <% transaksi.forEach(function(item) { %>
-                                <tr>
-                                    <td><%= item.id %></td>
-                                    <td><%= item.namaPasien %></td>
-                                    <td><%= item.namaDokter %></td>
-                                    <td><%= new Date(item.tanggal).toLocaleString() %></td>
-                                    <td><%= item.status %></td>
-                                    <td>
-                                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#prosesTransaksiModal-<%= item.id %>">
-                                            Proses Transaksi
-                                        </button>
-                                    </td>
-                                </tr>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>No</th>
+                                        <th>Tanggal</th>
+                                        <th>Nama Pasien</th>
+                                        <th>No. Telepon</th>
+                                        <th>Dokter</th>
+                                        <th>Metode Daftar</th>
+                                        <th>Status</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% bookings.forEach((booking, index) => { %>
+                                        <tr>
+                                            <td><%= index + 1 %></td>
+                                            <td><%= new Date(booking.tanggalBooking).toLocaleDateString('id-ID') %></td>
+                                            <td><%= booking.namaPasien %></td>
+                                            <td><%= booking.nomorTelepon %></td>
+                                            <td><%= booking.namaDokter %></td>
+                                            <td><%= booking.metodePendaftaran %></td>
+                                            <td>
+                                                <% if (booking.statusPembayaran === 'lunas') { %>
+                                                    <span class="badge bg-success">Lunas</span>
+                                                <% } else { %>
+                                                    <span class="badge bg-warning">Belum Bayar</span>
+                                                <% } %>
+                                            </td>
+                                            <td>
+                                                <% if (booking.statusPembayaran !== 'lunas') { %>
+                                                    <button class="btn btn-primary btn-sm" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#pembayaranModal-<%= booking.idBooking %>">
+                                                        Proses Pembayaran
+                                                    </button>
+                                                <% } %>
+                                            </td>
+                                        </tr>
 
-                                <!-- Modal untuk setiap transaksi -->
-                                <div class="modal fade" id="prosesTransaksiModal-<%= item.id %>" tabindex="-1">
-                                    <!-- Isi modal sama seperti sebelumnya -->
-                                </div>
-                                <% }); %>
-                            </tbody>
-                        </table>
-
-                        <% if (transaksi.length === 0) { %>
-                        <div class="alert alert-info text-center">
-                            Tidak ada transaksi yang perlu diproses
+                                        <!-- Modal Pembayaran -->
+                                        <div class="modal fade" id="pembayaranModal-<%= booking.idBooking %>" tabindex="-1">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Proses Pembayaran</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <form action="/admin/proses-pembayaran" method="POST">
+                                                        <input type="hidden" name="bookingId" value="<%= booking.idBooking %>">
+                                                        <input type="hidden" name="dokterId" value="<%= booking.dokterId %>">
+                                                        <div class="modal-body">
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Nama Pasien</label>
+                                                                <input type="text" class="form-control" value="<%= booking.namaPasien %>" readonly>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Dokter</label>
+                                                                <input type="text" class="form-control" value="<%= booking.namaDokter %>" readonly>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Total Biaya (Rp)</label>
+                                                                <input type="number" name="totalBiaya" class="form-control" required>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                                            <button type="submit" class="btn btn-primary">Proses Pembayaran</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <% }); %>
+                                </tbody>
+                            </table>
                         </div>
-                        <% } %>
                     </div>
                 </div>
             </main>

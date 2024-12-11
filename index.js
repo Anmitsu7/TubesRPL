@@ -715,6 +715,135 @@ app.post('/admin/delete-jadwal', isAuthenticated, (req, res) => {
   });
 });
 
+// Route untuk menampilkan halaman transaksi
+app.get('/admin/transaksi', isAuthenticated, (req, res) => {
+  if (req.session.user.role !== 'admin') {
+    return res.redirect('/dashboard');
+  }
+
+  // Query untuk mendapatkan daftar pasien yang sudah selesai berobat tapi belum bayar
+  const query = `
+    SELECT b.*, 
+           p.namaUser as namaPasien, 
+           p.nomorTelepon,
+           d.namaUser as namaDokter,
+           jd.hari,
+           jd.jamMulai,
+           jd.jamSelesai,
+           t.totalBiaya,
+           t.id as idTransaksi
+    FROM booking b
+    JOIN user p ON b.pasienId = p.idUser
+    JOIN jadwal_dokter jd ON b.jadwalId = jd.idJadwal
+    JOIN user d ON jd.dokterId = d.idUser
+    LEFT JOIN transaksi t ON b.pasienId = t.pasienId AND b.jadwalId = jd.idJadwal
+    WHERE b.statusAntrian = 'selesai' 
+    AND (b.statusPembayaran = 'belum_bayar' OR b.statusPembayaran IS NULL)
+    ORDER BY b.tanggalBooking DESC
+  `;
+
+  pool.query(query, (err, bookings) => {
+    if (err) {
+      console.error('Error:', err);
+      req.flash('error', 'Terjadi kesalahan saat memuat data transaksi');
+      return res.redirect('/admin/dashboard');
+    }
+
+    res.render('admin/transaksi', {
+      user: req.session.user,
+      bookings: bookings,
+      success: req.flash('success'),
+      error: req.flash('error')
+    });
+  });
+});
+
+// Route untuk memproses pembayaran
+app.post('/admin/proses-pembayaran', isAuthenticated, (req, res) => {
+  if (req.session.user.role !== 'admin') {
+    return res.redirect('/dashboard');
+  }
+
+  const { bookingId, totalBiaya, dokterId } = req.body;
+
+  pool.getConnection((err, connection) => {
+    if (err) {
+      req.flash('error', 'Terjadi kesalahan koneksi database');
+      return res.redirect('/admin/transaksi');
+    }
+
+    connection.beginTransaction(err => {
+      if (err) {
+        connection.release();
+        req.flash('error', 'Terjadi kesalahan saat memulai transaksi');
+        return res.redirect('/admin/transaksi');
+      }
+
+      // 1. Get booking data
+      const getBookingQuery = 'SELECT pasienId FROM booking WHERE idBooking = ?';
+      connection.query(getBookingQuery, [bookingId], (err, results) => {
+        if (err) {
+          return connection.rollback(() => {
+            connection.release();
+            req.flash('error', 'Gagal mendapatkan data booking');
+            res.redirect('/admin/transaksi');
+          });
+        }
+
+        const pasienId = results[0].pasienId;
+
+        // 2. Create new transaction
+        const insertTransaksiQuery = `
+          INSERT INTO transaksi (pasienId, dokterId, totalBiaya, status)
+          VALUES (?, ?, ?, 'Lunas')
+        `;
+
+        connection.query(insertTransaksiQuery, [pasienId, dokterId, totalBiaya], (err) => {
+          if (err) {
+            return connection.rollback(() => {
+              connection.release();
+              req.flash('error', 'Gagal membuat transaksi');
+              res.redirect('/admin/transaksi');
+            });
+          }
+
+          // 3. Update booking status
+          const updateBookingQuery = `
+            UPDATE booking 
+            SET statusPembayaran = 'lunas'
+            WHERE idBooking = ?
+          `;
+
+          connection.query(updateBookingQuery, [bookingId], (err) => {
+            if (err) {
+              return connection.rollback(() => {
+                connection.release();
+                req.flash('error', 'Gagal mengupdate status pembayaran');
+                res.redirect('/admin/transaksi');
+              });
+            }
+
+            // Commit transaction
+            connection.commit(err => {
+              if (err) {
+                return connection.rollback(() => {
+                  connection.release();
+                  req.flash('error', 'Gagal menyimpan transaksi');
+                  res.redirect('/admin/transaksi');
+                });
+              }
+
+              connection.release();
+              req.flash('success', 'Pembayaran berhasil diproses');
+              res.redirect('/admin/transaksi');
+            });
+          });
+        });
+      });
+    });
+  });
+});
+
 
 
 //-------------------------------------------------------------------------------------------------
