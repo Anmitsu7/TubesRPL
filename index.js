@@ -212,7 +212,7 @@ app.get('/halaman-pasien', isAuthenticated, (req, res) => {
 });
 
 //cek jadwal dokter
-app.get('/cek-jadwal-dokter', isAuthenticated, (req, res) => {
+app.get('/pasien/cek-jadwal-dokter', isAuthenticated, (req, res) => {
   const { dokterId, hari } = req.query;
 
   pool.query('SELECT * FROM user WHERE role = "dokter"', (err, doctors) => {
@@ -235,7 +235,7 @@ app.get('/cek-jadwal-dokter', isAuthenticated, (req, res) => {
           return res.status(500).send('Server error saat mengambil jadwal dokter');
         }
 
-        res.render('cek-jadwal-dokter', {
+        res.render('pasien/cek-jadwal-dokter', {
           jadwal: results,
           doctors,
           dokterId,
@@ -243,7 +243,7 @@ app.get('/cek-jadwal-dokter', isAuthenticated, (req, res) => {
         });
       });
     } else {
-      res.render('cek-jadwal-dokter', { doctors, jadwal: [], dokterId: null, hari: null });
+      res.render('pasien/cek-jadwal-dokter', { doctors, jadwal: [], dokterId: null, hari: null });
     }
   });
 });
@@ -252,7 +252,15 @@ app.get('/cek-jadwal-dokter', isAuthenticated, (req, res) => {
 //booking
 app.post('/booking', isAuthenticated, (req, res) => {
   const { jadwalId, metodePendaftaran } = req.body;
-  const pasienId = req.session.user.id;
+  const pasienId = req.session.user.idUser;
+
+  console.log('User ID:', req.session.user ? req.session.user.idUser : 'No user ID');
+
+   if (!req.session.user.idUser) {
+        console.error('ID User tidak ditemukan di session');
+        return res.status(401).send('ID Pengguna tidak ditemukan');
+    }
+
 
   // Cek ketersediaan slot
   const checkQuery = metodePendaftaran === 'online'
@@ -291,7 +299,7 @@ app.post('/booking', isAuthenticated, (req, res) => {
           return res.status(500).send('Error saat menyimpan data booking');
         }
 
-        res.redirect('/cek-jadwal-dokter?message=success');
+        res.redirect('pasien/cek-jadwal-dokter?message=success');
       });
     });
   });
