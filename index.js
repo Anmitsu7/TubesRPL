@@ -18,7 +18,7 @@ const dbConfig = {
   host: 'localhost',
   user: 'root',
   password: '',
-  database: 'klinikrpl3'
+  database: 'klinikrpl2'
 };
 
 // Create MySQL session store
@@ -141,10 +141,10 @@ app.post('/login', (req, res) => {
                 res.redirect('/halaman-admin');
                 break;
               case 'dokter':
-                res.redirect('/dokter/dashboard');
+                res.redirect('/dokter/halaman-dokter');
                 break;
               case 'perawat':
-                res.redirect('/perawat/dashboard');
+                res.redirect('/perawat/halaman-perawat');
                 break;
               case 'pasien':
                 res.redirect('/dashboard');
@@ -983,10 +983,9 @@ app.post('/admin/proses-pembayaran', isAuthenticated, (req, res) => {
 });
 
 
-
 //-------------------------------------------------------------------------------------------------
 // Doctor Routes
-app.get('/halaman-dokter', isAuthenticated, (req, res) => {
+app.get('/dokter/halaman-dokter', isAuthenticated, (req, res) => {
   if (req.session.user.role !== 'dokter') {
     return res.redirect('/dashboard');
   }
@@ -1572,59 +1571,37 @@ app.get('/lihat-jadwal-pasien', (req, res) => {
 
 
 //-------------------------------------------------------------------------------------------------
-//halaman perawat
-app.post('/halaman-perawat', (req, res) => {
-  // Pastikan hanya perawat yang bisa mengakses
-  if (req.session.role !== 'perawat') {
-    return res.status(403).json({ success: false, message: 'Unauthorized' });
+
+
+app.get('/perawat/halaman-perawat', isAuthenticated, (req, res) => {
+  if (req.session.user.role !== 'perawat') {
+    return res.redirect('/dashboard');
   }
 
-  const { bookingId, currentStatus } = req.body;
-  let newStatus;
+  const query = `
+    SELECT b.idBooking, b.pasienId, p.namaUser AS namaPasien, 
+           jd.hari, jd.jamMulai, jd.jamSelesai, b.statusAntrian 
+    FROM booking b
+    JOIN user p ON b.pasienId = p.idUser
+    JOIN jadwal_dokter jd ON b.jadwalId = jd.idJadwal
+    WHERE b.status = 'aktif'
+    ORDER BY jd.hari, jd.jamMulai
+  `;
 
-  // Logika perubahan status
-  switch (currentStatus) {
-    case 'menunggu':
-      newStatus = 'dipanggil';
-      break;
-    case 'dipanggil':
-      newStatus = 'selesai';
-      break;
-    default:
-      return res.status(400).json({ success: false, message: 'Invalid status' });
-  }
-
-  const query = 'UPDATE booking SET statusAntrian = ? WHERE idBooking = ?';
-
-  pool.query(query, [newStatus, bookingId], (error, result) => {
-    if (error) {
-      console.error('Error updating booking status:', error);
-      return res.status(500).json({ success: false, message: 'Server error' });
+  pool.query(query, (err, bookings) => {
+    if (err) {
+      req.flash('error', 'Gagal memuat data booking');
+      return res.redirect('/dashboard');
     }
 
-    // Log perubahan status
-    const logQuery = `
-          INSERT INTO log_status_booking 
-          (bookingId, statusLama, statusBaru, petugasId, waktuPerubahan) 
-          VALUES (?, ?, ?, ?, NOW())
-      `;
-    pool.query(logQuery, [bookingId, currentStatus, newStatus, req.session.idUser]);
-
-    // Jika request adalah AJAX, kirim JSON
-    if (req.xhr || req.headers.accept.indexOf('json') > -1) {
-      return res.json({
-        success: true,
-        message: 'Status berhasil diupdate',
-        newStatus: newStatus
-      });
-    }
-
-    // Jika bukan AJAX, redirect kembali ke halaman
-    req.flash('success', 'Status booking berhasil diperbarui');
-    res.redirect('/halaman-perawat');
+    res.render('perawat/halaman-perawat', {
+      user: req.session.user,
+      bookings: bookings,
+      success: req.flash('success'),
+      error: req.flash('error')
+    });
   });
 });
-
 
 
 
