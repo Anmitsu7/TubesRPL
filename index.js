@@ -15,10 +15,10 @@ const PORT = process.env.PORT || 3000;
 // Database Configuration
 const dbConfig = {
   connectionLimit: 10,
-  host: 'localhost', 
+  host: 'localhost',
   user: 'root',
   password: '',
-  database: 'klinikrpl2'
+  database: 'klinikrpl3'
 };
 
 // Create MySQL session store
@@ -78,9 +78,9 @@ app.get('/', (req, res) => {
 
 // Login Route
 app.get('/login', (req, res) => {
-  res.render('login', { 
+  res.render('login', {
     message: req.flash('error'),
-    success: req.flash('success') 
+    success: req.flash('success')
   });
 });
 
@@ -134,9 +134,9 @@ app.post('/login', (req, res) => {
               req.flash('error', 'Terjadi kesalahan saat login');
               return res.redirect('/login');
             }
-            
+
             // Redirect berdasarkan role
-            switch(user.role) {
+            switch (user.role) {
               case 'admin':
                 res.redirect('/halaman-admin');
                 break;
@@ -169,8 +169,8 @@ app.post('/login', (req, res) => {
 // Dashboard Route
 app.get('/dashboard', isAuthenticated, (req, res) => {
   const { role } = req.session.user;
-  
-  switch(role) {
+
+  switch (role) {
     case 'admin':
       res.redirect('/halaman-admin');
       break;
@@ -188,10 +188,10 @@ app.get('/dashboard', isAuthenticated, (req, res) => {
 
 // Signup Route
 app.get('/signup', (req, res) => {
-  res.render('signup', { 
+  res.render('signup', {
     message: null,
     formData: {},
-    alertType: null 
+    alertType: null
   });
 });
 
@@ -225,7 +225,7 @@ app.post('/signup', (req, res) => {
     }
 
     const query = 'INSERT INTO user (namaUser, email, password, tanggalLahir, alamat, nomorTelepon, role) VALUES (?, ?, ?, ?, ?, ?, ?)';
-    
+
     pool.query(query, [namaUser, email, hashedPassword, tanggalLahir, alamat, nomorTelepon, 'pasien'], (err) => {
       if (err) {
         return res.render('signup', {
@@ -249,16 +249,154 @@ app.get('/logout', (req, res) => {
   });
 });
 
+///rute pasien
+app.get('/halaman-pasien', isAuthenticated, (req, res) => {
+  console.log('Halaman Pasien Route - Session User:', req.session.user);
+
+  if (req.session.user && req.session.user.role === 'pasien') {
+    res.render('pasien/halaman-pasien', { user: req.session.user });
+  } else {
+    console.log('User role is not pasien, redirecting to dashboard');
+    res.redirect('/dashboard');
+  }
+});
+
+//cek jadwal dokter
+app.get('/pasien/cek-jadwal-dokter', isAuthenticated, (req, res) => {
+  const { dokterId, hari } = req.query;
+
+  pool.query('SELECT * FROM user WHERE role = "dokter"', (err, doctors) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send('Error saat mengambil data dokter');
+    }
+
+    if (dokterId && hari) {
+      const query = `
+        SELECT jd.*, u.namaUser
+        FROM jadwal_dokter jd
+        JOIN user u ON jd.dokterId = u.idUser
+        WHERE jd.dokterId = ? AND jd.hari = ?
+      `;
+
+      pool.query(query, [dokterId, hari], (err, results) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).send('Server error saat mengambil jadwal dokter');
+        }
+
+        res.render('pasien/cek-jadwal-dokter', {
+          jadwal: results,
+          doctors,
+          dokterId,
+          hari
+        });
+      });
+    } else {
+      res.render('pasien/cek-jadwal-dokter', { doctors, jadwal: [], dokterId: null, hari: null });
+    }
+  });
+});
+
+
+//booking
+app.post('/booking', isAuthenticated, (req, res) => {
+  const { jadwalId, metodePendaftaran } = req.body;
+  const pasienId = req.session.user.idUser;
+
+  console.log('User ID:', req.session.user ? req.session.user.idUser : 'No user ID');
+
+  if (!req.session.user.idUser) {
+    console.error('ID User tidak ditemukan di session');
+    return res.status(401).send('ID Pengguna tidak ditemukan');
+  }
+
+
+  // Cek ketersediaan slot
+  const checkQuery = metodePendaftaran === 'online'
+    ? 'SELECT * FROM jadwal_dokter WHERE idJadwal = ? AND sisaKuotaOnline > 0'
+    : 'SELECT * FROM jadwal_dokter WHERE idJadwal = ? AND sisaKuotaOffline > 0';
+
+  pool.query(checkQuery, [jadwalId], (err, results) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send('Server error saat memproses booking');
+    }
+
+    if (results.length === 0) {
+      return res.status(400).send('Slot waktu tidak tersedia');
+    }
+
+    // Proses booking dan update kuota
+    const updateJadwalQuery = metodePendaftaran === 'online'
+      ? 'UPDATE jadwal_dokter SET sisaKuotaOnline = sisaKuotaOnline - 1 WHERE idJadwal = ?'
+      : 'UPDATE jadwal_dokter SET sisaKuotaOffline = sisaKuotaOffline - 1 WHERE idJadwal = ?';
+
+    const insertBookingQuery = `
+      INSERT INTO booking (pasienId, jadwalId, tanggalBooking, metodePendaftaran) 
+      VALUES (?, ?, NOW(), ?)
+    `;
+
+    pool.query(updateJadwalQuery, [jadwalId], (err) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).send('Error saat memperbarui jadwal');
+      }
+      
+
+      pool.query(insertBookingQuery, [pasienId, jadwalId, metodePendaftaran], (err) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).send('Error saat menyimpan data booking');
+        }
+        
+        // Redirect with booking success message and booking number
+        res.redirect(`/pasien/cek-jadwal-dokter?message=success`);
+      
+
+      });
+    });
+   
+  });
+});
+
+//cek riwayat medis
+app.get('/pasien/riwayat-medis', isAuthenticated, (req, res) => {
+  // Gunakan req.session.user.idUser karena log menunjukkan ini adalah ID yang benar
+  const userId = req.session.user.idUser;
+
+  pool.query(
+    'SELECT * FROM riwayat_medis WHERE idPasien = ? ORDER BY tanggal DESC',
+    [userId],
+    (err, results) => {
+      if (err) {
+        console.error('Error fetching medical history:', err);
+        return res.status(500).send('Server error');
+      }
+
+      // Log jumlah hasil dan detail hasil
+      console.log('Number of medical history records:', results.length);
+      console.log('Medical history results:', results);
+
+      res.render('pasien/riwayat-medis', {
+        user: req.session.user,
+        riwayatMedis: results,
+      });
+    }
+  );
+});
 
 
 
 //-------------------------------------------------------------------------------------------------
 // Admin Routes
 app.get('/halaman-admin', isAuthenticated, (req, res) => {
-  if (req.session.user.role !== 'admin') {
+  console.log('Halaman Pasien Route - Session User:', req.session.user);
+
+  if (req.session.user && req.session.user.role !== 'admin') {
     return res.redirect('/dashboard');
   }
-  res.render('admin/dashboard', { 
+  res.render('admin/dashboard', {
     user: req.session.user,
     success: req.flash('success'),
     error: req.flash('error')
@@ -297,7 +435,7 @@ app.get('/admin/daftar-pasien-offline', isAuthenticated, (req, res) => {
     if (err) {
       console.error('Error:', err);
       req.flash('error', 'Terjadi kesalahan saat memuat data');
-      return res.redirect('/admin/dashboard'); 
+      return res.redirect('/admin/dashboard');
     }
 
     res.render('admin/daftar-pasien-offline', {
@@ -316,16 +454,16 @@ app.post('/admin/daftar-pasien-offline', isAuthenticated, (req, res) => {
   }
 
   pool.getConnection((err, connection) => {
-    if(err) {
+    if (err) {
       req.flash('error', 'Terjadi kesalahan koneksi database');
       return res.redirect('/admin/daftar-pasien-offline');
     }
 
     connection.beginTransaction(err => {
-      if(err) {
+      if (err) {
         connection.release();
         req.flash('error', 'Terjadi kesalahan saat memulai transaksi');
-        return res.redirect('/admin/daftar-pasien-offline');  
+        return res.redirect('/admin/daftar-pasien-offline');
       }
 
       const { namaUser, email, tanggalLahir, alamat, nomorTelepon, jadwalId } = req.body;
@@ -333,7 +471,7 @@ app.post('/admin/daftar-pasien-offline', isAuthenticated, (req, res) => {
       // Cek apakah email sudah terdaftar
       const checkEmailQuery = 'SELECT idUser FROM user WHERE email = ?';
       connection.query(checkEmailQuery, [email], (err, results) => {
-        if(err) {
+        if (err) {
           return connection.rollback(() => {
             connection.release();
             req.flash('error', 'Terjadi kesalahan saat memeriksa email');
@@ -345,7 +483,7 @@ app.post('/admin/daftar-pasien-offline', isAuthenticated, (req, res) => {
           // Insert booking
           const insertBookingQuery = 'INSERT INTO booking (pasienId, jadwalId, tanggalBooking, metodePendaftaran, status, nomorAntrian, statusAntrian) VALUES (?, ?, NOW(), "offline", "aktif", NULL, "menunggu")';
           connection.query(insertBookingQuery, [pasienId, jadwalId], (err) => {
-            if(err) {
+            if (err) {
               return connection.rollback(() => {
                 connection.release();
                 req.flash('error', 'Terjadi kesalahan saat membuat booking');
@@ -356,7 +494,7 @@ app.post('/admin/daftar-pasien-offline', isAuthenticated, (req, res) => {
             // Update kuota
             const updateQuotaQuery = 'UPDATE jadwal_dokter SET sisaKuotaOffline = sisaKuotaOffline - 1 WHERE idJadwal = ? AND sisaKuotaOffline > 0';
             connection.query(updateQuotaQuery, [jadwalId], (err) => {
-              if(err) {
+              if (err) {
                 return connection.rollback(() => {
                   connection.release();
                   req.flash('error', 'Terjadi kesalahan saat update kuota');
@@ -365,7 +503,7 @@ app.post('/admin/daftar-pasien-offline', isAuthenticated, (req, res) => {
               }
 
               connection.commit((err) => {
-                if(err) {
+                if (err) {
                   return connection.rollback(() => {
                     connection.release();
                     req.flash('error', 'Terjadi kesalahan saat menyimpan data');
@@ -387,7 +525,7 @@ app.post('/admin/daftar-pasien-offline', isAuthenticated, (req, res) => {
         } else {
           // Email belum terdaftar, buat user baru
           bcrypt.hash(nomorTelepon, 10, (err, hashedPassword) => {
-            if(err) {
+            if (err) {
               return connection.rollback(() => {
                 connection.release();
                 req.flash('error', 'Terjadi kesalahan saat enkripsi password');
@@ -397,7 +535,7 @@ app.post('/admin/daftar-pasien-offline', isAuthenticated, (req, res) => {
 
             const insertUserQuery = 'INSERT INTO user (namaUser, email, password, tanggalLahir, alamat, nomorTelepon, role) VALUES (?, ?, ?, ?, ?, ?, "pasien")';
             connection.query(insertUserQuery, [namaUser, email, hashedPassword, tanggalLahir, alamat, nomorTelepon], (err, result) => {
-              if(err) {
+              if (err) {
                 return connection.rollback(() => {
                   connection.release();
                   req.flash('error', 'Terjadi kesalahan saat mendaftarkan pasien');
@@ -519,7 +657,7 @@ app.post('/admin/assign-antrian', isAuthenticated, (req, res) => {
               res.redirect('/admin/kelola-antrian');
             });
           }
-          
+
           connection.release();
           req.flash('success', 'Nomor antrian berhasil ditetapkan');
           res.redirect(`/admin/kelola-antrian?metode=${metodePendaftaran}`);
@@ -655,13 +793,13 @@ app.post('/admin/delete-jadwal', isAuthenticated, (req, res) => {
   `;
 
   pool.getConnection((err, connection) => {
-    if(err) {
+    if (err) {
       req.flash('error', 'Terjadi kesalahan koneksi database');
       return res.redirect('/admin/kelola-jadwal-dokter');
     }
 
     connection.beginTransaction(err => {
-      if(err) {
+      if (err) {
         connection.release();
         req.flash('error', 'Terjadi kesalahan saat memulai transaksi');
         return res.redirect('/admin/kelola-jadwal-dokter');
@@ -669,7 +807,7 @@ app.post('/admin/delete-jadwal', isAuthenticated, (req, res) => {
 
       // First check for active bookings
       connection.query(checkBookingQuery, [idJadwal], (err, results) => {
-        if(err) {
+        if (err) {
           return connection.rollback(() => {
             connection.release();
             req.flash('error', 'Terjadi kesalahan saat memeriksa booking aktif');
@@ -677,7 +815,7 @@ app.post('/admin/delete-jadwal', isAuthenticated, (req, res) => {
           });
         }
 
-        if(results[0].bookingCount > 0) {
+        if (results[0].bookingCount > 0) {
           return connection.rollback(() => {
             connection.release();
             req.flash('error', 'Tidak dapat menghapus jadwal karena masih ada booking aktif');
@@ -688,7 +826,7 @@ app.post('/admin/delete-jadwal', isAuthenticated, (req, res) => {
         // If no active bookings, proceed with deletion
         const deleteQuery = 'DELETE FROM jadwal_dokter WHERE idJadwal = ?';
         connection.query(deleteQuery, [idJadwal], (err) => {
-          if(err) {
+          if (err) {
             return connection.rollback(() => {
               connection.release();
               req.flash('error', 'Gagal menghapus jadwal dokter');
@@ -697,7 +835,7 @@ app.post('/admin/delete-jadwal', isAuthenticated, (req, res) => {
           }
 
           connection.commit(err => {
-            if(err) {
+            if (err) {
               return connection.rollback(() => {
                 connection.release();
                 req.flash('error', 'Terjadi kesalahan saat menyimpan perubahan');
@@ -1438,52 +1576,52 @@ app.get('/lihat-jadwal-pasien', (req, res) => {
 app.post('/halaman-perawat', (req, res) => {
   // Pastikan hanya perawat yang bisa mengakses
   if (req.session.role !== 'perawat') {
-      return res.status(403).json({ success: false, message: 'Unauthorized' });
+    return res.status(403).json({ success: false, message: 'Unauthorized' });
   }
 
   const { bookingId, currentStatus } = req.body;
   let newStatus;
 
   // Logika perubahan status
-  switch(currentStatus) {
-      case 'menunggu':
-          newStatus = 'dipanggil';
-          break;
-      case 'dipanggil':
-          newStatus = 'selesai';
-          break;
-      default:
-          return res.status(400).json({ success: false, message: 'Invalid status' });
+  switch (currentStatus) {
+    case 'menunggu':
+      newStatus = 'dipanggil';
+      break;
+    case 'dipanggil':
+      newStatus = 'selesai';
+      break;
+    default:
+      return res.status(400).json({ success: false, message: 'Invalid status' });
   }
 
   const query = 'UPDATE booking SET statusAntrian = ? WHERE idBooking = ?';
-  
-  pool.query(query, [newStatus, bookingId], (error, result) => {
-      if (error) {
-          console.error('Error updating booking status:', error);
-          return res.status(500).json({ success: false, message: 'Server error' });
-      }
 
-      // Log perubahan status
-      const logQuery = `
+  pool.query(query, [newStatus, bookingId], (error, result) => {
+    if (error) {
+      console.error('Error updating booking status:', error);
+      return res.status(500).json({ success: false, message: 'Server error' });
+    }
+
+    // Log perubahan status
+    const logQuery = `
           INSERT INTO log_status_booking 
           (bookingId, statusLama, statusBaru, petugasId, waktuPerubahan) 
           VALUES (?, ?, ?, ?, NOW())
       `;
-      pool.query(logQuery, [bookingId, currentStatus, newStatus, req.session.idUser]);
+    pool.query(logQuery, [bookingId, currentStatus, newStatus, req.session.idUser]);
 
-      // Jika request adalah AJAX, kirim JSON
-      if (req.xhr || req.headers.accept.indexOf('json') > -1) {
-          return res.json({ 
-              success: true, 
-              message: 'Status berhasil diupdate', 
-              newStatus: newStatus 
-          });
-      }
+    // Jika request adalah AJAX, kirim JSON
+    if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+      return res.json({
+        success: true,
+        message: 'Status berhasil diupdate',
+        newStatus: newStatus
+      });
+    }
 
-      // Jika bukan AJAX, redirect kembali ke halaman
-      req.flash('success', 'Status booking berhasil diperbarui');
-      res.redirect('/halaman-perawat');
+    // Jika bukan AJAX, redirect kembali ke halaman
+    req.flash('success', 'Status booking berhasil diperbarui');
+    res.redirect('/halaman-perawat');
   });
 });
 
