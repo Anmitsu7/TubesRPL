@@ -84,42 +84,42 @@
     <div class="back-button-container">
       <a href="/halaman-pasien" class="back-button">← Back to Halaman Pasien</a>
     </div>
-
-    <!-- Booking Notification Modal -->
-    <div id="bookingModal" class="modal">
-      <div class="modal-content">
-        <span class="close">&times;</span>
-        <h2>Booking Berhasil!</h2>
-        <button id="closeModal">Tutup</button>
-      </div>
+  <!-- Booking Notification Modal -->
+  <div id="bookingModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Booking Berhasil!</h2>
+      
+      <button id="closeModal">Tutup</button>
     </div>
   </div>
+</div>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const bookingSuccess = urlParams.get('message');
-      const nomorAntrian = urlParams.get('nomorAntrian');
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const bookingSuccess = urlParams.get('message');
+    
 
-      if (bookingSuccess === 'success') {
-        const modal = document.getElementById('bookingModal');
-        const nomorAntrianSpan = document.getElementById('nomorAntrian');
-        const closeModalBtn = document.getElementById('closeModal');
-        const closeSpan = document.querySelector('.close');
+    if (bookingSuccess === 'success') {
+      const modal = document.getElementById('bookingModal');
+      
+      const closeModalBtn = document.getElementById('closeModal');
+      const closeSpan = document.querySelector('.close');
 
-        nomorAntrianSpan.textContent = nomorAntrian;
-        modal.style.display = 'block';
+      
+      modal.style.display = 'block';
 
-        // Close modal when clicking on close button or outside the modal
-        closeModalBtn.onclick = () => modal.style.display = 'none';
-        closeSpan.onclick = () => modal.style.display = 'none';
-        window.onclick = (event) => {
-          if (event.target == modal) {
-            modal.style.display = 'none';
-          }
-        };
-      }
-    });
-  </script>
+      // Close modal when clicking on close button or outside the modal
+      closeModalBtn.onclick = () => modal.style.display = 'none';
+      closeSpan.onclick = () => modal.style.display = 'none';
+      window.onclick = (event) => {
+        if (event.target == modal) {
+          modal.style.display = 'none';
+        }
+      };
+    }
+  });
+</script>
 </body>
 </html>
