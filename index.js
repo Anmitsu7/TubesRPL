@@ -10,9 +10,10 @@ const PORT = process.env.PORT || 3000;
 
 // Static file path
 const __dirname = path.resolve();
- app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public')));
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
+
 
 // Middleware
 app.use(bodyParser.json());
@@ -95,7 +96,7 @@ app.post('/login', (req, res) => {
           });
         });
       }
-      
+
       // Jika password plain text
       return Promise.resolve(inputPassword === storedPassword);
     };
@@ -129,7 +130,7 @@ app.get('/dashboard', (req, res) => {
   if (!req.session.user) {
     return res.redirect('/login'); // Jika tidak ada session user, redirect ke login
   }
-  
+
   // Jika session ada, tampilkan dashboard
   res.render('dashboard', { user: req.session.user });
 });
@@ -211,7 +212,7 @@ app.get('/halaman-pasien', isAuthenticated, (req, res) => {
 });
 
 //cek jadwal dokter
-app.get('/cek-jadwal-dokter', isAuthenticated, (req, res) => {
+app.get('/pasien/cek-jadwal-dokter', isAuthenticated, (req, res) => {
   const { dokterId, hari } = req.query;
 
   pool.query('SELECT * FROM user WHERE role = "dokter"', (err, doctors) => {
@@ -234,7 +235,7 @@ app.get('/cek-jadwal-dokter', isAuthenticated, (req, res) => {
           return res.status(500).send('Server error saat mengambil jadwal dokter');
         }
 
-        res.render('cek-jadwal-dokter', {
+        res.render('pasien/cek-jadwal-dokter', {
           jadwal: results,
           doctors,
           dokterId,
@@ -242,7 +243,7 @@ app.get('/cek-jadwal-dokter', isAuthenticated, (req, res) => {
         });
       });
     } else {
-      res.render('cek-jadwal-dokter', { doctors, jadwal: [], dokterId: null, hari: null });
+      res.render('pasien/cek-jadwal-dokter', { doctors, jadwal: [], dokterId: null, hari: null });
     }
   });
 });
@@ -251,7 +252,15 @@ app.get('/cek-jadwal-dokter', isAuthenticated, (req, res) => {
 //booking
 app.post('/booking', isAuthenticated, (req, res) => {
   const { jadwalId, metodePendaftaran } = req.body;
-  const pasienId = req.session.user.id;
+  const pasienId = req.session.user.idUser;
+
+  console.log('User ID:', req.session.user ? req.session.user.idUser : 'No user ID');
+
+   if (!req.session.user.idUser) {
+        console.error('ID User tidak ditemukan di session');
+        return res.status(401).send('ID Pengguna tidak ditemukan');
+    }
+
 
   // Cek ketersediaan slot
   const checkQuery = metodePendaftaran === 'online'
@@ -269,8 +278,8 @@ app.post('/booking', isAuthenticated, (req, res) => {
     }
 
     // Proses booking dan update kuota
-    const updateJadwalQuery = metodePendaftaran === 'online' 
-      ? 'UPDATE jadwal_dokter SET sisaKuotaOnline = sisaKuotaOnline - 1 WHERE idJadwal = ?' 
+    const updateJadwalQuery = metodePendaftaran === 'online'
+      ? 'UPDATE jadwal_dokter SET sisaKuotaOnline = sisaKuotaOnline - 1 WHERE idJadwal = ?'
       : 'UPDATE jadwal_dokter SET sisaKuotaOffline = sisaKuotaOffline - 1 WHERE idJadwal = ?';
 
     const insertBookingQuery = `
@@ -290,7 +299,7 @@ app.post('/booking', isAuthenticated, (req, res) => {
           return res.status(500).send('Error saat menyimpan data booking');
         }
 
-        res.redirect('/cek-jadwal-dokter?message=success');
+        res.redirect('pasien/cek-jadwal-dokter?message=success');
       });
     });
   });
@@ -360,9 +369,9 @@ app.get('/admin/kelola-antrian', isAuthenticated, (req, res) => {
         return res.status(500).send('Server error');
       }
 
-      res.render('admin/kelola-antrian', { 
-        user: req.session.user, 
-        bookings, 
+      res.render('admin/kelola-antrian', {
+        user: req.session.user,
+        bookings,
         metodePendaftaran,
         jadwalDokter
       });
@@ -410,7 +419,7 @@ app.post('/admin/assign-antrian', isAuthenticated, (req, res) => {
           ${metodePendaftaran === 'online' ? 'sisaKuotaOnline' : 'sisaKuotaOffline'} - 1 
           WHERE idJadwal = (SELECT jadwalId FROM booking WHERE idBooking = ?)
         `;
-        
+
         connection.query(updateKuotaQuery, [bookingId], (err) => {
           if (err) {
             return connection.rollback(() => {
@@ -468,9 +477,9 @@ app.get('/admin/daftar-pasien-offline', isAuthenticated, (req, res) => {
       console.error(err);
       return res.status(500).send('Server error');
     }
-    
-    res.render('admin/daftar-pasien-offline', { 
-      user: req.session.user, 
+
+    res.render('admin/daftar-pasien-offline', {
+      user: req.session.user,
       doctors: doctors
     });
   });
@@ -505,7 +514,7 @@ app.post('/admin/daftar-pasien-offline', isAuthenticated, (req, res) => {
           console.error(err);
           return res.status(500).send('Error creating booking');
         }
-        
+
         // Update doctor's schedule quota
         const updateQuotaQuery = 'UPDATE jadwal_dokter SET sisaKuotaOffline = sisaKuotaOffline - 1 WHERE idJadwal = ?';
         pool.query(updateQuotaQuery, [jadwalId], (err) => {
@@ -588,10 +597,10 @@ app.get('/admin/kelola-jadwal-dokter', isAuthenticated, (req, res) => {
         console.error(err);
         return res.status(500).send('Server error');
       }
-      res.render('admin/kelola-jadwal-dokter', { 
-        user: req.session.user, 
+      res.render('admin/kelola-jadwal-dokter', {
+        user: req.session.user,
         schedules,
-        doctors 
+        doctors
       });
     });
   });
@@ -611,11 +620,11 @@ app.post('/admin/tambah-jadwal', isAuthenticated, (req, res) => {
   `;
 
   pool.query(query, [
-    dokterId, 
-    hari, 
-    jamMulai, 
-    jamSelesai, 
-    kuotaOnline, 
+    dokterId,
+    hari,
+    jamMulai,
+    jamSelesai,
+    kuotaOnline,
     kuotaOffline,
     kuotaOnline,
     kuotaOffline
@@ -644,11 +653,11 @@ app.post('/admin/update-jadwal', isAuthenticated, (req, res) => {
   `;
 
   pool.query(query, [
-    jamMulai, 
-    jamSelesai, 
-    kuotaOnline, 
+    jamMulai,
+    jamSelesai,
     kuotaOnline,
-    kuotaOffline, 
+    kuotaOnline,
+    kuotaOffline,
     kuotaOffline,
     idJadwal
   ], (err) => {
@@ -689,12 +698,12 @@ app.post('/admin/proses-transaksi', isAuthenticated, (req, res) => {
     return res.redirect('/dashboard');
   }
 
-  const { 
-    idTransaksi, 
-    metodePembayaran, 
-    biayaKonsultasi, 
-    biayaTindakan, 
-    status 
+  const {
+    idTransaksi,
+    metodePembayaran,
+    biayaKonsultasi,
+    biayaTindakan,
+    status
   } = req.body;
 
   const query = `
@@ -712,12 +721,12 @@ app.post('/admin/proses-transaksi', isAuthenticated, (req, res) => {
   const totalBiaya = parseFloat(biayaKonsultasi) + parseFloat(biayaTindakan);
 
   pool.query(query, [
-    metodePembayaran, 
-    biayaKonsultasi, 
-    biayaTindakan, 
-    biayaKonsultasi, 
-    biayaTindakan, 
-    status, 
+    metodePembayaran,
+    biayaKonsultasi,
+    biayaTindakan,
+    biayaKonsultasi,
+    biayaTindakan,
+    status,
     idTransaksi
   ], (err) => {
     if (err) {
@@ -727,6 +736,9 @@ app.post('/admin/proses-transaksi', isAuthenticated, (req, res) => {
     res.redirect('/admin/transaksi');
   });
 });
+
+//-------------------------------------------------------------------------------------------------
+//rute dokter
 app.get('/halaman-dokter', async (req, res) => {
   try {
     // Cek session
@@ -735,7 +747,7 @@ app.get('/halaman-dokter', async (req, res) => {
     }
 
     const dokterId = req.session.user.idUser;
-    
+
     // Query untuk data dokter dengan pengecekan role yang lebih detail
     const queryDokter = `
       SELECT 
@@ -827,7 +839,7 @@ app.get('/halaman-dokter', async (req, res) => {
     // Format tanggal booking
     const formattedPasienResult = pasienResult.map(pasien => ({
       ...pasien,
-      tanggalBooking: pasien.tanggalBooking 
+      tanggalBooking: pasien.tanggalBooking
         ? new Date(pasien.tanggalBooking)
           .toLocaleDateString('id-ID', {
             day: 'numeric',
@@ -853,7 +865,7 @@ app.get('/halaman-dokter', async (req, res) => {
   }
 });
 
-app.get('/hasil-diagnosa', (req, res) => {
+app.get('/diagnosa', (req, res) => {
   // Cek apakah user sudah login
   if (!req.session.user) {
     return res.redirect('/login');
@@ -897,13 +909,13 @@ app.get('/hasil-diagnosa', (req, res) => {
     }));
 
     // Render halaman dengan data
-    res.render('hasil-diagnosa', {
+    res.render('dokter/diagnosa', {
       user: req.session.user,
       hasilDiagnosa: formattedResults
     });
   });
 });
-app.post('/dokter/catat-obat', (req, res) => {
+app.post('catat-obat', (req, res) => {
   // Cek session
   if (!req.session.user) {
     return res.redirect('/login');
@@ -957,7 +969,7 @@ app.post('/dokter/catat-obat', (req, res) => {
 });
 
 // Rute untuk halaman catat obat khusus dokter
-app.get('/dokter/catat-obat', (req, res) => {
+app.get('/catat-obat', (req, res) => {
   // Cek session
   if (!req.session.user) {
     return res.redirect('/login');
@@ -1005,6 +1017,85 @@ app.get('/dokter/catat-obat', (req, res) => {
       daftarPasien: formattedPasien
     });
   });
+});
+
+app.get('/lihat-jadwal-pasien', (req, res) => {
+  try {
+    const dokterId = req.query.dokterId;
+
+    // Debug: cek apakah dokterId ada dalam query string
+    console.log('dokterId:', dokterId);
+
+    // Validasi input dokterId
+    if (!dokterId) {
+      return res.render('dokter/lihat-jadwal-pasien', {
+        user: req.session.user || {},
+        jadwalPasien: [],
+        totalPasien: 0,
+        pesan: 'Dokter ID tidak boleh kosong, silakan pilih dokter terlebih dahulu.'
+      });
+    }
+
+    // Query untuk mendapatkan jadwal pasien dengan informasi lengkap
+    const query = `
+      SELECT 
+        u.namaUser AS pasien, 
+        u.nomorTelepon AS teleponPasien,
+        b.tanggalBooking, 
+        b.metodePendaftaran, 
+        b.nomorAntrian, 
+        b.statusAntrian,
+        jd.hari,
+        jd.jamMulai,
+        jd.jamSelesai,
+        dok.namaUser AS namaDokter
+      FROM booking b
+      JOIN user u ON b.pasienId = u.idUser
+      JOIN jadwal_dokter jd ON b.jadwalId = jd.idJadwal
+      JOIN user dok ON jd.dokterId = dok.idUser
+      WHERE jd.dokterId = ? 
+        AND DATE(b.tanggalBooking) = CURDATE()
+      ORDER BY b.tanggalBooking;
+    `;
+
+    pool.query(query, [dokterId], (err, hasil) => {
+      if (err) {
+        console.error('Database error:', err);
+        return res.status(500).render('error', {
+          message: 'Kesalahan server: Gagal mengambil jadwal pasien',
+          user: req.session.user || {}
+        });
+      }
+
+      // Proses data untuk tampilan
+      const jadwalPasien = hasil.map(item => ({
+        namaPasien: item.pasien,
+        teleponPasien: item.teleponPasien,
+        tanggalBooking: moment(item.tanggalBooking).format('DD MMMM YYYY HH:mm'),
+        metodePendaftaran: item.metodePendaftaran,
+        nomorAntrian: item.nomorAntrian || 'Belum ditentukan',
+        statusAntrian: item.statusAntrian,
+        hari: item.hari,
+        jamMulai: item.jamMulai,
+        jamSelesai: item.jamSelesai,
+        namaDokter: item.namaDokter
+      }));
+
+      // Render halaman dengan data
+      res.render('dokter/lihat-jadwal-pasien', {
+        user: req.session.user || {},
+        jadwalPasien: jadwalPasien,
+        totalPasien: jadwalPasien.length,
+        pesan: jadwalPasien.length === 0 ? 'Tidak ada jadwal pasien hari ini.' : null
+      });
+    });
+  } catch (error) {
+    console.error('Unexpected error:', error);
+    res.status(500).render('error', {
+      message: 'Terjadi kesalahan tidak terduga',
+      user: req.session.user || {}
+    });
+  }
 });
 
 

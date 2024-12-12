@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 08, 2024 at 05:53 AM
+-- Generation Time: Dec 11, 2024 at 04:41 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -44,7 +44,7 @@ CREATE TABLE `booking` (
 
 INSERT INTO `booking` (`idBooking`, `pasienId`, `jadwalId`, `tanggalBooking`, `metodePendaftaran`, `status`, `nomorAntrian`, `statusAntrian`) VALUES
 (1, 4, 2, '2024-12-04 23:00:34', 'offline', 'aktif', NULL, 'menunggu'),
-(2, 4, 2, '2024-12-04 23:00:42', 'online', 'aktif', NULL, 'menunggu');
+(2, 4, 2, '2024-12-04 23:00:42', 'online', 'aktif', '1', 'menunggu');
 
 -- --------------------------------------------------------
 
@@ -69,7 +69,7 @@ CREATE TABLE `jadwal_dokter` (
 --
 
 INSERT INTO `jadwal_dokter` (`idJadwal`, `dokterId`, `hari`, `jamMulai`, `jamSelesai`, `kuotaOnline`, `kuotaOffline`, `sisaKuotaOnline`, `sisaKuotaOffline`) VALUES
-(2, 1, 'Senin', '08:00:00', '16:00:00', 10, 5, 9, 4),
+(2, 1, 'Senin', '08:00:00', '16:00:00', 10, 5, 8, 4),
 (3, 1, 'Rabu', '09:00:00', '17:00:00', 8, 7, 8, 7),
 (4, 1, 'Jumat', '10:00:00', '18:00:00', 12, 6, 12, 6),
 (5, 2, 'Selasa', '08:30:00', '16:30:00', 9, 6, 9, 6),
@@ -128,7 +128,7 @@ CREATE TABLE `user` (
   `tanggalLahir` date DEFAULT NULL,
   `alamat` text DEFAULT NULL,
   `nomorTelepon` varchar(20) DEFAULT NULL,
-  `role` enum('pasien','dokter','admin') DEFAULT 'pasien'
+  `role` enum('pasien','dokter','admin','perawat') DEFAULT 'pasien'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --

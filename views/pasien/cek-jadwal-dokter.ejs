@@ -63,6 +63,21 @@
             <td><%= item.sisaKuotaOnline %></td>
             <td><%= item.kuotaOffline %></td>
             <td><%= item.sisaKuotaOffline %></td>
+            <td>
+              <!-- Form untuk tombol booking -->
+              <form method="POST" action="/booking">
+                <input type="hidden" name="jadwalId" value="<%= item.idJadwal %>">
+                
+                <!-- Pilihan metode pendaftaran -->
+                <select name="metodePendaftaran" required>
+                  <option value="">-- Pilih Metode --</option>
+                  <option value="online">Online</option>
+                  <option value="offline">Offline</option>
+                </select>
+      
+                <button type="submit">Booking</button>
+              </form>
+            </td>
           </tr>
         <% }) %>
       </tbody>
