@@ -16,7 +16,7 @@
         body {
             font-family: 'Poppins', sans-serif;
             background-color: #f5f5f5;
-            padding-bottom: 80px; /* To ensure footer doesn't overlap */
+            padding-bottom: 80px;
             color: #333;
         }
 
@@ -27,7 +27,7 @@
             padding: 20px 50px;
             background-color: #fff;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            border-bottom: 2px solid #007bff; /* Ganti ke biru */
+            border-bottom: 2px solid #007bff;
             position: fixed;
             top: 0;
             width: 100%;
@@ -36,7 +36,7 @@
 
         header h1 {
             font-size: 28px;
-            color: #007bff; /* Ganti ke biru */
+            color: #007bff;
             font-weight: 600;
         }
 
@@ -55,7 +55,7 @@
         }
 
         header nav a:hover {
-            color: #007bff; /* Ganti ke biru */
+            color: #007bff;
             transform: translateY(-2px);
         }
 
@@ -86,9 +86,9 @@
             align-items: center;
             justify-content: space-between;
             padding: 100px 50px 50px;
-            background: linear-gradient(135deg, #007bff, #6c757d); /* Ganti ke biru */
+            background: linear-gradient(135deg, #007bff, #6c757d);
             border-radius: 20px;
-            margin-top: 80px; /* To avoid overlap with fixed header */
+            margin-top: 80px;
             box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
         }
 
@@ -109,41 +109,57 @@
             margin-bottom: 20px;
         }
 
-        .hero-text button {
-            background-color: #007bff; /* Ganti ke biru */
+        .container {
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 80%;
+        }
+
+        .container h3 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+        }
+
+        .btn {
+            background-color: #007bff;
             color: #fff;
-            padding: 15px 30px;
+            padding: 10px 20px;
             border: none;
             border-radius: 5px;
             font-size: 16px;
             cursor: pointer;
-            margin-right: 20px;
-            transition: background-color 0.3s ease, transform 0.3s ease;
-            width: auto; /* Default for larger screens */
+            transition: background-color 0.3s ease;
         }
 
-        .hero-text button:hover {
-            background-color: #0056b3; /* Ganti ke biru lebih gelap */
-            transform: translateY(-2px);
-        }
-
-        /* Responsiveness: Ensure button is responsive */
-        @media screen and (max-width: 768px) {
-            .hero {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .hero-text {
-                max-width: 100%;
-                text-align: center;
-            }
-
-            .hero-text button {
-                width: 100%; /* Button takes full width on smaller screens */
-                padding: 18px 0; /* Make button taller */
-                font-size: 18px; /* Adjust font size for readability */
-            }
+        .btn:hover {
+            background-color: #0056b3;
         }
 
         footer {
@@ -167,11 +183,9 @@
     <header>
         <h1>Klinik SehatCare</h1>
         <nav>
-            <a href="/diagnosa">Hasil Diagnosa</a>
-            <a href="/catat-obat">Catat Obat</a>
             <a href="/logout">Log Out</a>
             <div class="profile">
-                <img src="https://via.placeholder.com/40" alt="Dokter Profile"> 
+                <img src="https://via.placeholder.com/40" alt="Dokter Profile">
                 <span><%= user.namaUser || 'Dokter' %></span>
             </div>
         </nav>
@@ -179,15 +193,63 @@
 
     <section class="hero">
         <div class="hero-text">
-            <h2>Selamat Datang, <%= user.namaUser|| 'Dokter' %>!</h2>
+            <h2>Selamat Datang, <%= user.namaUser || 'Dokter' %>!</h2>
             <p>Berikan layanan kesehatan terbaik untuk pasien Anda.</p>
-            <br>
-            <button onclick="window.location.href='/lihat-jadwal-pasien'">Lihat Jadwal Pasien</button>
         </div>
     </section>
+
+    <div class="container">
+        <h3>Informasi Pasien</h3>
+        <p><strong>ID Pasien:</strong> <span id="idPasien">12345</span></p>
+        <p><strong>Nama Pasien:</strong> <span id="namaPasien">John Doe</span></p>
+        <p><strong>Nama Dokter:</strong> <span id="namaDokter">Dr. <%= user.namaUser %></span></p>
+        <p><strong>Tanggal Pemeriksaan:</strong> <span id="tglPemeriksaan">12-12-2024</span></p>
+
+        <h3>Formulir Pemeriksaan</h3>
+        <form>
+            <div class="form-group">
+                <label for="diagnosa">Diagnosa</label>
+                <textarea id="diagnosa" rows="4" placeholder="Masukkan diagnosa..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="resep">Resep</label>
+                <textarea id="resep" rows="4" placeholder="Masukkan resep obat..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="catatan">Catatan</label>
+                <textarea id="catatan" rows="4" placeholder="Masukkan catatan tambahan..."></textarea>
+            </div>
+            <button type="button" class="btn" onclick="simpanData()">Simpan</button>
+        </form>
+    </div>
 
     <footer>
         <p>&copy; 2024 Klinik SehatCare. All rights reserved.</p>
     </footer>
+
+    <script>
+        function simpanData() {
+            const diagnosa = document.getElementById('diagnosa').value;
+            const resep = document.getElementById('resep').value;
+            const catatan = document.getElementById('catatan').value;
+
+            if (!diagnosa || !resep || !catatan) {
+                alert('Harap lengkapi semua bidang sebelum menyimpan.');
+                return;
+            }
+
+            console.log('Data Tersimpan:', {
+                idPasien: document.getElementById('idPasien').textContent,
+                namaPasien: document.getElementById('namaPasien').textContent,
+                namaDokter: document.getElementById('namaDokter').textContent,
+                tglPemeriksaan: document.getElementById('tglPemeriksaan').textContent,
+                diagnosa,
+                resep,
+                catatan
+            });
+
+            alert('Data berhasil disimpan!');
+        }
+    </script>
 </body>
 </html>
