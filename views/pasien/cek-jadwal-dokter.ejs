@@ -1,4 +1,3 @@
-<!-- views/pasien/cek-jadwal-dokter.ejs -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,87 +5,121 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cek Jadwal Dokter</title>
   <link rel="stylesheet" href="/css/cek-jadwal-dokter.css">
-
 </head>
 <body>
-  <h1>Cek Jadwal Dokter</h1>
+  <div class="container">
+    <h1>Cek Jadwal Dokter</h1>
 
-  <!-- Form untuk filter -->
-  <form method="get" action="/pasien/cek-jadwal-dokter">
-    <label for="dokterId">Pilih Dokter:</label>
-    <select name="dokterId" id="dokterId">
-      <option value="">-- Pilih Dokter --</option>
-      <% doctors.forEach(dokter => { %>
-        <option value="<%= dokter.idUser %>" <%= dokterId == dokter.idUser ? 'selected' : '' %>>
-          <%= dokter.namaUser %>
-        </option>
-      <% }) %>
-    </select>
-
-    <label for="hari">Pilih Hari:</label>
-    <select name="hari" id="hari">
-      <option value="">-- Pilih Hari --</option>
-      <% ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'].forEach(day => { %>
-        <option value="<%= day %>" <%= hari == day ? 'selected' : '' %>>
-          <%= day %>
-        </option>
-      <% }) %>
-    </select>
-
-    <button type="submit">Cari</button>
-  </form>
-
-  <!-- Tabel Jadwal Dokter -->
-  <h2>Hasil Jadwal</h2>
-  <% if (jadwal.length > 0) { %>
-    <table border="1">
-      <thead>
-        <tr>
-          <th>Dokter</th>
-          <th>Hari</th>
-          <th>Jam Mulai</th>
-          <th>Jam Selesai</th>
-          <th>Kuota Online</th>
-          <th>Sisa Kuota Online</th>
-          <th>Kuota Offline</th>
-          <th>Sisa Kuota Offline</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% jadwal.forEach(item => { %>
-          <tr>
-            <td><%= item.namaUser %></td>
-            <td><%= item.hari %></td>
-            <td><%= item.jamMulai %></td>
-            <td><%= item.jamSelesai %></td>
-            <td><%= item.kuotaOnline %></td>
-            <td><%= item.sisaKuotaOnline %></td>
-            <td><%= item.kuotaOffline %></td>
-            <td><%= item.sisaKuotaOffline %></td>
-            <td>
-              <!-- Form untuk tombol booking -->
-              <form method="POST" action="/booking">
-                <input type="hidden" name="jadwalId" value="<%= item.idJadwal %>">
-                
-                <!-- Pilihan metode pendaftaran -->
-                <select name="metodePendaftaran" required>
-                  <option value="">-- Pilih Metode --</option>
-                  <option value="online">Online</option>
-                  <option value="offline">Offline</option>
-                </select>
-      
-                <button type="submit">Booking</button>
-              </form>
-            </td>
-          </tr>
+    <!-- Form untuk filter -->
+    <form method="get" action="/pasien/cek-jadwal-dokter">
+      <label for="dokterId">Pilih Dokter:</label>
+      <select name="dokterId" id="dokterId">
+        <option value="">-- Pilih Dokter --</option>
+        <% doctors.forEach(dokter => { %>
+          <option value="<%= dokter.idUser %>" <%= dokterId == dokter.idUser ? 'selected' : '' %>>
+            <%= dokter.namaUser %>
+          </option>
         <% }) %>
-      </tbody>
-    </table>
-  <% } else { %>
-    <p>Tidak ada jadwal yang ditemukan.</p>
-  <% } %>
-  <div class="back-button-container">
-    <a href="/halaman-pasien" class="back-button">← Back to Halaman Pasien</a>
+      </select>
+
+      <label for="hari">Pilih Hari:</label>
+      <select name="hari" id="hari">
+        <option value="">-- Pilih Hari --</option>
+        <% ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'].forEach(day => { %>
+          <option value="<%= day %>" <%= hari == day ? 'selected' : '' %>>
+            <%= day %>
+          </option>
+        <% }) %>
+      </select>
+
+      <button type="submit">Cari</button>
+    </form>
+
+    <!-- Tabel Jadwal Dokter -->
+    <h2>Hasil Jadwal</h2>
+    <% if (jadwal.length > 0) { %>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Dokter</th>
+              <th>Hari</th>
+              <th>Jam Mulai</th>
+              <th>Jam Selesai</th>
+              <th>Kuota Online</th>
+              <th>Sisa Kuota Online</th>
+              <th>Kuota Offline</th>
+              <th>Sisa Kuota Offline</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% jadwal.forEach(item => { %>
+              <tr>
+                <td><%= item.namaUser %></td>
+                <td><%= item.hari %></td>
+                <td><%= item.jamMulai %></td>
+                <td><%= item.jamSelesai %></td>
+                <td><%= item.kuotaOnline %></td>
+                <td><%= item.sisaKuotaOnline %></td>
+                <td><%= item.kuotaOffline %></td>
+                <td><%= item.sisaKuotaOffline %></td>
+                <td>
+                  <!-- Form untuk tombol booking -->
+                  <form method="POST" action="/booking" class="booking-form">
+                    <input type="hidden" name="jadwalId" value="<%= item.idJadwal %>">
+                    <input type="hidden" name="metodePendaftaran" value="online">
+                    <button type="submit">Booking Online</button>
+                  </form>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } else { %>
+      <p>Tidak ada jadwal yang ditemukan.</p>
+    <% } %>
+
+    <div class="back-button-container">
+      <a href="/halaman-pasien" class="back-button">← Back to Halaman Pasien</a>
+    </div>
+
+    <!-- Booking Notification Modal -->
+    <div id="bookingModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Booking Berhasil!</h2>
+        <button id="closeModal">Tutup</button>
+      </div>
+    </div>
   </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const bookingSuccess = urlParams.get('message');
+      const nomorAntrian = urlParams.get('nomorAntrian');
+
+      if (bookingSuccess === 'success') {
+        const modal = document.getElementById('bookingModal');
+        const nomorAntrianSpan = document.getElementById('nomorAntrian');
+        const closeModalBtn = document.getElementById('closeModal');
+        const closeSpan = document.querySelector('.close');
+
+        nomorAntrianSpan.textContent = nomorAntrian;
+        modal.style.display = 'block';
+
+        // Close modal when clicking on close button or outside the modal
+        closeModalBtn.onclick = () => modal.style.display = 'none';
+        closeSpan.onclick = () => modal.style.display = 'none';
+        window.onclick = (event) => {
+          if (event.target == modal) {
+            modal.style.display = 'none';
+          }
+        };
+      }
+    });
+  </script>
 </body>
 </html>

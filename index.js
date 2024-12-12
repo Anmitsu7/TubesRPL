@@ -204,9 +204,12 @@ app.get('/logout', (req, res) => {
 //-------------------------------------------------------------------------------------------------
 //rute pasien
 app.get('/halaman-pasien', isAuthenticated, (req, res) => {
-  if (req.session.user.role === 'pasien') {
+  console.log('Halaman Pasien Route - Session User:', req.session.user);
+  
+  if (req.session.user && req.session.user.role === 'pasien') {
     res.render('pasien/halaman-pasien', { user: req.session.user });
   } else {
+    console.log('User role is not pasien, redirecting to dashboard');
     res.redirect('/dashboard');
   }
 });
@@ -256,10 +259,10 @@ app.post('/booking', isAuthenticated, (req, res) => {
 
   console.log('User ID:', req.session.user ? req.session.user.idUser : 'No user ID');
 
-   if (!req.session.user.idUser) {
-        console.error('ID User tidak ditemukan di session');
-        return res.status(401).send('ID Pengguna tidak ditemukan');
-    }
+  if (!req.session.user.idUser) {
+    console.error('ID User tidak ditemukan di session');
+    return res.status(401).send('ID Pengguna tidak ditemukan');
+  }
 
 
   // Cek ketersediaan slot
@@ -292,24 +295,32 @@ app.post('/booking', isAuthenticated, (req, res) => {
         console.error(err);
         return res.status(500).send('Error saat memperbarui jadwal');
       }
+      //generate booking number
+      // const nomorAntrian = generateBookingNumber();
 
       pool.query(insertBookingQuery, [pasienId, jadwalId, metodePendaftaran], (err) => {
         if (err) {
           console.error(err);
           return res.status(500).send('Error saat menyimpan data booking');
         }
+        // res.redirect(`/pasien/cek-jadwal-dokter?message=success&nomorAntrian=${nomorAntrian}`);
+        res.redirect(`/pasien/cek-jadwal-dokter?message=success`);
 
-        res.redirect('pasien/cek-jadwal-dokter?message=success');
+        // res.redirect('pasien/cek-jadwal-dokter?message=success');
       });
     });
+    // function generateBookingNumber() {
+    //   // Example simple implementation
+    //   return Math.floor(1000 + Math.random() * 9000);
+    // }
   });
 });
 
 //cek riwayat medis
-app.get('/riwayat-medis', isAuthenticated, (req, res) => {
-  const userId = req.session.user.id; // Mengambil ID pasien dari sesi
+app.get('/pasien/riwayat-medis', isAuthenticated, (req, res) => {
+  // Gunakan req.session.user.idUser karena log menunjukkan ini adalah ID yang benar
+  const userId = req.session.user.idUser;
 
-  // Query untuk mengambil data riwayat medis pasien
   pool.query(
     'SELECT * FROM riwayat_medis WHERE idPasien = ? ORDER BY tanggal DESC',
     [userId],
@@ -319,9 +330,13 @@ app.get('/riwayat-medis', isAuthenticated, (req, res) => {
         return res.status(500).send('Server error');
       }
 
-      res.render('riwayat-medis', {
-        user: req.session.user, // Data pengguna
-        riwayatMedis: results,  // Data riwayat medis
+      // Log jumlah hasil dan detail hasil
+      console.log('Number of medical history records:', results.length);
+      console.log('Medical history results:', results);
+
+      res.render('pasien/riwayat-medis', {
+        user: req.session.user,
+        riwayatMedis: results,
       });
     }
   );
