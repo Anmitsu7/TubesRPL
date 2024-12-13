@@ -1585,16 +1585,26 @@ app.get('/perawat/halaman-perawat', isAuthenticated, (req, res) => {
 
   const query = `
     SELECT b.idBooking, b.pasienId, p.namaUser AS namaPasien, 
-           jd.hari, jd.jamMulai, jd.jamSelesai, b.statusAntrian 
+           jd.hari, jd.jamMulai, jd.jamSelesai, b.statusAntrian,
+           d.namaUser AS namaDokter, b.nomorAntrian
     FROM booking b
     JOIN user p ON b.pasienId = p.idUser
     JOIN jadwal_dokter jd ON b.jadwalId = jd.idJadwal
+    JOIN user d ON jd.dokterID = d.idUser
     WHERE b.status = 'aktif'
-    ORDER BY jd.hari, jd.jamMulai
+    ORDER BY 
+      CASE b.statusAntrian 
+        WHEN 'menunggu' THEN 1 
+        WHEN 'dipanggil' THEN 2 
+        WHEN 'selesai' THEN 3 
+      END,
+      jd.hari, 
+      jd.jamMulai
   `;
 
   pool.query(query, (err, bookings) => {
     if (err) {
+      console.error('Error fetching bookings:', err);
       req.flash('error', 'Gagal memuat data booking');
       return res.redirect('/dashboard');
     }
@@ -1608,8 +1618,63 @@ app.get('/perawat/halaman-perawat', isAuthenticated, (req, res) => {
   });
 });
 
+app.post('/perawat/halaman-perawat', isAuthenticated, (req, res) => {
+  if (req.session.user.role !== 'perawat') {
+    return res.redirect('/dashboard');
+  }
 
+  const { bookingId, currentStatus, catatan, diagnosa } = req.body;
 
+  // Determine next status
+  let newStatus;
+  if (currentStatus === 'menunggu') {
+    newStatus = 'dipanggil';
+  } else if (currentStatus === 'dipanggil') {
+    newStatus = 'selesai';
+  } else {
+    req.flash('error', 'Status tidak valid');
+    return res.redirect('/perawat/halaman-perawat');
+  }
+
+  const updateQuery = `
+    UPDATE booking 
+    SET statusAntrian = ?
+    WHERE idBooking = ?
+  `;
+
+  pool.query(updateQuery, [newStatus, bookingId], (err, result) => {
+    if (err) {
+      console.error('Error updating booking status:', err);
+      req.flash('error', 'Gagal mengupdate status booking');
+      return res.redirect('/perawat/halaman-perawat');
+    }
+
+    // If 'dipanggil' status, insert medical record
+    if (newStatus === 'selesai') {
+      const insertMedicalRecordQuery = `
+        INSERT INTO rekam_medis (bookingId, catatan, diagnosa, perawatId, tanggalPemeriksaan)
+        VALUES (?, ?, ?, ?, NOW())
+      `;
+
+      pool.query(insertMedicalRecordQuery, [
+        bookingId, 
+        catatan || null, 
+        diagnosa || null, 
+        req.session.user.idUser
+      ], (medicalRecordErr) => {
+        if (medicalRecordErr) {
+          console.error('Error inserting medical record:', medicalRecordErr);
+        }
+
+        req.flash('success', 'Status booking berhasil diupdate dan rekam medis ditambahkan');
+        res.redirect('/perawat/halaman-perawat');
+      });
+    } else {
+      req.flash('success', 'Status booking berhasil diupdate');
+      res.redirect('/perawat/halaman-perawat');
+    }
+  });
+});
 //-------------------------------------------------------------------------------------------------
 // Start server
 app.listen(PORT, () => {
