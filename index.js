@@ -859,22 +859,17 @@ app.get('/admin/transaksi', isAuthenticated, (req, res) => {
     return res.redirect('/dashboard');
   }
 
-  // Query untuk mendapatkan daftar pasien yang sudah selesai berobat tapi belum bayar
   const query = `
     SELECT b.*, 
            p.namaUser as namaPasien, 
            p.nomorTelepon,
            d.namaUser as namaDokter,
-           jd.hari,
-           jd.jamMulai,
-           jd.jamSelesai,
-           t.totalBiaya,
-           t.id as idTransaksi
+           jd.dokterId,
+           d.biayaKonsultasi
     FROM booking b
     JOIN user p ON b.pasienId = p.idUser
     JOIN jadwal_dokter jd ON b.jadwalId = jd.idJadwal
     JOIN user d ON jd.dokterId = d.idUser
-    LEFT JOIN transaksi t ON b.pasienId = t.pasienId AND b.jadwalId = jd.idJadwal
     WHERE b.statusAntrian = 'selesai' 
     AND (b.statusPembayaran = 'belum_bayar' OR b.statusPembayaran IS NULL)
     ORDER BY b.tanggalBooking DESC
@@ -896,13 +891,13 @@ app.get('/admin/transaksi', isAuthenticated, (req, res) => {
   });
 });
 
-// Route untuk memproses pembayaran
+// Controller untuk proses pembayaran
 app.post('/admin/proses-pembayaran', isAuthenticated, (req, res) => {
   if (req.session.user.role !== 'admin') {
     return res.redirect('/dashboard');
   }
 
-  const { bookingId, totalBiaya, dokterId } = req.body;
+  const { bookingId, metodePembayaran } = req.body;
 
   pool.getConnection((err, connection) => {
     if (err) {
@@ -917,8 +912,15 @@ app.post('/admin/proses-pembayaran', isAuthenticated, (req, res) => {
         return res.redirect('/admin/transaksi');
       }
 
-      // 1. Get booking data
-      const getBookingQuery = 'SELECT pasienId FROM booking WHERE idBooking = ?';
+      // Get booking data
+      const getBookingQuery = `
+        SELECT b.pasienId, jd.dokterId, d.biayaKonsultasi
+        FROM booking b
+        JOIN jadwal_dokter jd ON b.jadwalId = jd.idJadwal
+        JOIN user d ON jd.dokterId = d.idUser
+        WHERE b.idBooking = ?
+      `;
+
       connection.query(getBookingQuery, [bookingId], (err, results) => {
         if (err) {
           return connection.rollback(() => {
@@ -928,55 +930,58 @@ app.post('/admin/proses-pembayaran', isAuthenticated, (req, res) => {
           });
         }
 
-        const pasienId = results[0].pasienId;
+        const { pasienId, dokterId, biayaKonsultasi } = results[0];
 
-        // 2. Create new transaction
+        // Insert transaction
         const insertTransaksiQuery = `
-          INSERT INTO transaksi (pasienId, dokterId, totalBiaya, status)
-          VALUES (?, ?, ?, 'Lunas')
+          INSERT INTO transaksi 
+          (pasienId, dokterId, totalBiaya, status, metodePembayaran, tanggal)
+          VALUES (?, ?, ?, 'Lunas', ?, NOW())
         `;
 
-        connection.query(insertTransaksiQuery, [pasienId, dokterId, totalBiaya], (err) => {
-          if (err) {
-            return connection.rollback(() => {
-              connection.release();
-              req.flash('error', 'Gagal membuat transaksi');
-              res.redirect('/admin/transaksi');
-            });
-          }
-
-          // 3. Update booking status
-          const updateBookingQuery = `
-            UPDATE booking 
-            SET statusPembayaran = 'lunas'
-            WHERE idBooking = ?
-          `;
-
-          connection.query(updateBookingQuery, [bookingId], (err) => {
+        connection.query(insertTransaksiQuery, 
+          [pasienId, dokterId, biayaKonsultasi, metodePembayaran], 
+          (err) => {
             if (err) {
               return connection.rollback(() => {
                 connection.release();
-                req.flash('error', 'Gagal mengupdate status pembayaran');
+                req.flash('error', 'Gagal membuat transaksi');
                 res.redirect('/admin/transaksi');
               });
             }
 
-            // Commit transaction
-            connection.commit(err => {
+            // Update booking status
+            const updateBookingQuery = `
+              UPDATE booking 
+              SET statusPembayaran = 'lunas'
+              WHERE idBooking = ?
+            `;
+
+            connection.query(updateBookingQuery, [bookingId], (err) => {
               if (err) {
                 return connection.rollback(() => {
                   connection.release();
-                  req.flash('error', 'Gagal menyimpan transaksi');
+                  req.flash('error', 'Gagal mengupdate status pembayaran');
                   res.redirect('/admin/transaksi');
                 });
               }
 
-              connection.release();
-              req.flash('success', 'Pembayaran berhasil diproses');
-              res.redirect('/admin/transaksi');
+              connection.commit(err => {
+                if (err) {
+                  return connection.rollback(() => {
+                    connection.release();
+                    req.flash('error', 'Gagal menyimpan transaksi');
+                    res.redirect('/admin/transaksi');
+                  });
+                }
+
+                connection.release();
+                req.flash('success', 'Pembayaran berhasil dikonfirmasi');
+                res.redirect('/admin/transaksi');
+              });
             });
-          });
-        });
+          }
+        );
       });
     });
   });
