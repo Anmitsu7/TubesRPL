@@ -342,21 +342,21 @@ app.post('/booking', isAuthenticated, (req, res) => {
         console.error(err);
         return res.status(500).send('Error saat memperbarui jadwal');
       }
-      
+
 
       pool.query(insertBookingQuery, [pasienId, jadwalId, metodePendaftaran], (err) => {
         if (err) {
           console.error(err);
           return res.status(500).send('Error saat menyimpan data booking');
         }
-        
+
         // Redirect with booking success message and booking number
         res.redirect(`/pasien/cek-jadwal-dokter?message=success`);
-      
+
 
       });
     });
-   
+
   });
 });
 
@@ -939,8 +939,8 @@ app.post('/admin/proses-pembayaran', isAuthenticated, (req, res) => {
           VALUES (?, ?, ?, 'Lunas', ?, NOW())
         `;
 
-        connection.query(insertTransaksiQuery, 
-          [pasienId, dokterId, biayaKonsultasi, metodePembayaran], 
+        connection.query(insertTransaksiQuery,
+          [pasienId, dokterId, biayaKonsultasi, metodePembayaran],
           (err) => {
             if (err) {
               return connection.rollback(() => {
@@ -1664,7 +1664,7 @@ app.post('/perawat/halaman-perawat', isAuthenticated, (req, res) => {
   }
 
   const { bookingId, currentStatus, catatan, diagnosa } = req.body;
-  
+
   // Determine next status
   let newStatus;
   if (currentStatus === 'menunggu') {
@@ -1698,15 +1698,15 @@ app.post('/perawat/halaman-perawat', isAuthenticated, (req, res) => {
       `;
 
       pool.query(insertMedicalRecordQuery, [
-        bookingId, 
-        catatan || null, 
-        diagnosa || null, 
+        bookingId,
+        catatan || null,
+        diagnosa || null,
         req.session.user.idUser
       ], (medicalRecordErr) => {
         if (medicalRecordErr) {
           console.error('Error inserting medical record:', medicalRecordErr);
         }
-        
+
         req.flash('success', 'Status booking berhasil diupdate');
         res.redirect('/perawat/halaman-perawat');
       });
@@ -1715,6 +1715,152 @@ app.post('/perawat/halaman-perawat', isAuthenticated, (req, res) => {
       res.redirect('/perawat/halaman-perawat');
     }
   });
+});
+
+import multer from 'multer';
+
+// Konfigurasi Multer
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, 'public/uploads')); // Direktori penyimpanan
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    cb(null, `${file.fieldname}-${uniqueSuffix}-${file.originalname}`);
+  }
+});
+
+const upload = multer({ storage });
+
+// Route untuk menampilkan halaman catat rekam medis
+// Route untuk menampilkan halaman catat rekam medis
+app.get('/catat-rekam-medis/:idBooking', isAuthenticated, (req, res) => {
+  const { idBooking } = req.params;
+
+  // First, fetch the booking details
+  pool.query(
+    `SELECT 
+        b.idBooking, b.nomorAntrian, b.statusAntrian, 
+        p.namaUser AS namaPasien, d.namaUser AS namaDokter
+     FROM 
+        booking b
+     JOIN 
+        user p ON b.pasienId = p.idUser
+     JOIN 
+        user d ON b.jadwalId = d.idUser
+     WHERE 
+        b.idBooking = ?`,
+    [idBooking],
+    (bookingError, bookingResults) => {
+      if (bookingError) {
+        console.error('Error fetching booking details:', bookingError);
+        req.flash('error', 'Gagal memuat data booking');
+        return res.redirect('/dashboard');
+      }
+
+      if (bookingResults.length === 0) {
+        req.flash('error', 'Data booking tidak ditemukan');
+        return res.redirect('/dashboard');
+      }
+
+      // Then, fetch the list of patients
+      pool.query(
+        `SELECT idUser, namaUser 
+         FROM user 
+         WHERE role = 'pasien'`,
+        (patientsError, patients) => {
+          if (patientsError) {
+            console.error('Error fetching patients:', patientsError);
+            req.flash('error', 'Gagal memuat daftar pasien');
+            return res.redirect('/dashboard');
+          }
+
+          res.render('perawat/catat-rekam-medis', {
+            booking: bookingResults[0],
+            patients: patients, // Now patients is correctly defined
+            messages: {
+              error: req.flash('error'),
+              success: req.flash('success')
+            }
+          });
+        }
+      );
+    }
+  );
+});
+
+// Route untuk menangani form rekam medis
+// Route untuk menangani form rekam medis
+// Route untuk menangani form rekam medis
+// Route untuk menangani form rekam medis
+app.post('/perawat/catat-rekam-medis', isAuthenticated, upload.single('dokumenMedis'), (req, res) => {
+  const { 
+    pasienId, 
+    tekananDarah, 
+    tinggiBadan, 
+    beratBadan, 
+    suhuBadan, 
+    keluhanPasien,
+    diagnosa = null,  // Optional fields
+    resep = null,
+    catatan = null
+  } = req.body;
+
+  // Cek apakah ada file yang diupload
+  const dokumenMedisPath = req.file 
+    ? `/uploads/${req.file.filename}` 
+    : null;
+
+  // Log data untuk debugging
+  console.log({
+    pasienId, 
+    tekananDarah, 
+    tinggiBadan, 
+    beratBadan, 
+    suhuBadan, 
+    keluhanPasien,
+    diagnosa,
+    resep,
+    catatan,
+    dokumenMedisPath
+  });
+
+  pool.query(
+    `INSERT INTO riwayat_medis (
+      idPasien, 
+      tanggal, 
+      diagnosa, 
+      resep, 
+      catatan, 
+      tekanan_darah, 
+      tinggi_badan, 
+      berat_badan, 
+      suhu_badan, 
+      keluhan_pasien,
+      dokumen_medis
+    ) VALUES (?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      pasienId, 
+      diagnosa, 
+      resep, 
+      catatan, 
+      tekananDarah, 
+      tinggiBadan, 
+      beratBadan, 
+      suhuBadan, 
+      keluhanPasien, 
+      dokumenMedisPath
+    ],
+    (error, results) => {
+      if (error) {
+        console.error('Error inserting medical record:', error);
+        req.flash('error', 'Gagal menyimpan rekam medis');
+        return res.redirect('/catat-rekam-medis');
+      }
+      req.flash('success', 'Rekam medis berhasil disimpan');
+      res.redirect('/perawat/halaman-perawat'); // Sesuaikan dengan route yang tepat
+    }
+  );
 });
 //-------------------------------------------------------------------------------------------------
 // Start server
