@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Klinik SehatCare - Rekam Medis Pasien</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f5f5f5;
+            padding-bottom: 80px;
+            color: #333;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 50px;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-bottom: 2px solid #007bff;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+        }
+
+        header h1 {
+            font-size: 28px;
+            color: #007bff;
+            font-weight: 600;
+        }
+
+        .container {
+            margin: 100px auto 40px;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+        .patient-info {
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Klinik SehatCare</h1>
+        <nav>
+            <a href="/logout" class="btn btn-outline-danger">Log Out</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <h2 class="mb-4">Form Rekam Medis Pasien</h2>
+        
+        <div class="patient-info">
+            <h4>Informasi Pasien</h4>
+            <p><strong>Nama Pasien:</strong> <%= namaPasien %></p>
+            <p><strong>No. Antrian:</strong> <%= nomorAntrian %></p>
+            <p><strong>Dokter:</strong> <%= namaDokter %></p>
+        </div>
+
+        <form action="/perawat/catat-rekam-medis" method="POST">
+            <input type="hidden" name="bookingId" value="<%= bookingId %>">
+            
+            <div class="row">
+                <div class="col-md-6 form-group">
+                    <label for="tekananDarah">Tekanan Darah (mmHg)</label>
+                    <input type="text" class="form-control" id="tekananDarah" name="tekananDarah" 
+                           placeholder="Contoh: 120/80" required>
+                </div>
+                <div class="col-md-6 form-group">
+                    <label for="suhuBadan">Suhu Badan (°C)</label>
+                    <input type="number" step="0.1" min="35" max="42" class="form-control" 
+                           id="suhuBadan" name="suhuBadan" placeholder="Masukkan suhu badan" required>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 form-group">
+                    <label for="tinggiBadan">Tinggi Badan (cm)</label>
+                    <input type="number" step="0.1" min="50" max="250" class="form-control" 
+                           id="tinggiBadan" name="tinggiBadan" placeholder="Masukkan tinggi badan" required>
+                </div>
+                <div class="col-md-6 form-group">
+                    <label for="beratBadan">Berat Badan (kg)</label>
+                    <input type="number" step="0.1" min="10" max="300" class="form-control" 
+                           id="beratBadan" name="beratBadan" placeholder="Masukkan berat badan" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="keluhanPasien">Keluhan Pasien</label>
+                <textarea class="form-control" id="keluhanPasien" name="keluhanPasien" 
+                          rows="4" placeholder="Tuliskan keluhan pasien secara detail" required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="catatanTambahan">Catatan Tambahan (Opsional)</label>
+                <textarea class="form-control" id="catatanTambahan" name="catatanTambahan" 
+                          rows="3" placeholder="Catatan tambahan dari perawat"></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Simpan Rekam Medis</button>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Optional: Add client-side validation
+            const form = document.querySelector('form');
+            form.addEventListener('submit', function(e) {
+                const tekananDarah = document.getElementById('tekananDarah').value;
+                const tekananDarahRegex = /^\d{2,3}\/\d{2,3}$/;
+
+                if (!tekananDarahRegex.test(tekananDarah)) {
+                    e.preventDefault();
+                    alert('Format tekanan darah salah. Gunakan format: misalnya 120/80');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
