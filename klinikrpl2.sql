@@ -187,15 +187,26 @@ INSERT INTO `user` (`idUser`, `namaUser`, `email`, `password`, `tanggalLahir`, `
 (14, 'Dr. David Kim', 'david.kim@klinik.com', '$2a$10$GHI103', '1979-09-05', 'Jl. Dahlia No. 45', '081234567894', 'dokter'),
 (15, 'sava', 'sava@gmail.com', '$2a$10$0aSq6OWUMoxXpmonkRSBseff5UEaTze8XvsST.Vyonfz1da/EW.6e', '2012-12-12', 'koper', '0822', 'pasien');
 
+
+--
+
 --
 -- Indexes for dumped tables
 --
+--
+--
+ALTER TABLE `riwayat_medis` 
+ADD COLUMN `tekanan_darah` VARCHAR(20) DEFAULT NULL COMMENT 'Format: Sistolik/Diastolik, contoh: 120/80',
+ADD COLUMN `tinggi_badan` DECIMAL(5,2) DEFAULT NULL COMMENT 'Tinggi badan dalam sentimeter',
+ADD COLUMN `berat_badan` DECIMAL(5,2) DEFAULT NULL COMMENT 'Berat badan dalam kilogram',
+ADD COLUMN `suhu_badan` DECIMAL(4,1) DEFAULT NULL COMMENT 'Suhu badan dalam derajat Celsius',
+ADD COLUMN `keluhan_pasien` TEXT DEFAULT NULL COMMENT 'Deskripsi keluhan yang dirasakan pasien';
 
 --
 -- Indexes for table `booking`
 --
 ALTER TABLE `booking`
-  ADD PRIMARY KEY (`idBooking`),
+  ADD PRIMARY KEY (`idBooking`),  
   ADD KEY `pasienId` (`pasienId`),
   ADD KEY `jadwalId` (`jadwalId`);
 
@@ -297,6 +308,7 @@ ALTER TABLE `riwayat_medis`
 ALTER TABLE `transaksi`
   ADD CONSTRAINT `transaksi_ibfk_1` FOREIGN KEY (`pasienId`) REFERENCES `user` (`idUser`),
   ADD CONSTRAINT `transaksi_ibfk_2` FOREIGN KEY (`dokterId`) REFERENCES `user` (`idUser`);
+  
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

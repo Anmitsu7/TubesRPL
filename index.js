@@ -1618,13 +1618,53 @@ app.get('/perawat/halaman-perawat', isAuthenticated, (req, res) => {
   });
 });
 
+app.get('/perawat/halaman-perawat', isAuthenticated, (req, res) => {
+  if (req.session.user.role !== 'perawat') {
+    return res.redirect('/dashboard');
+  }
+
+  const query = `
+    SELECT b.idBooking, b.pasienId, p.namaUser AS namaPasien, 
+           jd.hari, jd.jamMulai, jd.jamSelesai, b.statusAntrian,
+           d.namaUser AS namaDokter, b.nomorAntrian
+    FROM booking b
+    JOIN user p ON b.pasienId = p.idUser
+    JOIN jadwal_dokter jd ON b.jadwalId = jd.idJadwal
+    JOIN user d ON jd.dokterID = d.idUser
+    WHERE b.status = 'aktif' AND b.nomorAntrian IS NOT NULL
+    ORDER BY 
+      CASE b.statusAntrian 
+        WHEN 'menunggu' THEN 1 
+        WHEN 'dipanggil' THEN 2 
+        WHEN 'selesai' THEN 3 
+      END,
+      jd.hari, 
+      jd.jamMulai
+  `;
+
+  pool.query(query, (err, bookings) => {
+    if (err) {
+      console.error('Error fetching bookings:', err);
+      req.flash('error', 'Gagal memuat data booking');
+      return res.redirect('/dashboard');
+    }
+
+    res.render('perawat/halaman-perawat', {
+      user: req.session.user,
+      bookings: bookings,
+      success: req.flash('success'),
+      error: req.flash('error')
+    });
+  });
+});
+
 app.post('/perawat/halaman-perawat', isAuthenticated, (req, res) => {
   if (req.session.user.role !== 'perawat') {
     return res.redirect('/dashboard');
   }
 
   const { bookingId, currentStatus, catatan, diagnosa } = req.body;
-
+  
   // Determine next status
   let newStatus;
   if (currentStatus === 'menunggu') {
@@ -1638,11 +1678,12 @@ app.post('/perawat/halaman-perawat', isAuthenticated, (req, res) => {
 
   const updateQuery = `
     UPDATE booking 
-    SET statusAntrian = ?
+    SET statusAntrian = ?, 
+        status = CASE WHEN ? = 'selesai' THEN 'selesai' ELSE status END
     WHERE idBooking = ?
   `;
 
-  pool.query(updateQuery, [newStatus, bookingId], (err, result) => {
+  pool.query(updateQuery, [newStatus, newStatus, bookingId], (err, result) => {
     if (err) {
       console.error('Error updating booking status:', err);
       req.flash('error', 'Gagal mengupdate status booking');
@@ -1665,8 +1706,8 @@ app.post('/perawat/halaman-perawat', isAuthenticated, (req, res) => {
         if (medicalRecordErr) {
           console.error('Error inserting medical record:', medicalRecordErr);
         }
-
-        req.flash('success', 'Status booking berhasil diupdate dan rekam medis ditambahkan');
+        
+        req.flash('success', 'Status booking berhasil diupdate');
         res.redirect('/perawat/halaman-perawat');
       });
     } else {
