@@ -879,7 +879,7 @@ app.get('/admin/transaksi', isAuthenticated, (req, res) => {
     if (err) {
       console.error('Error:', err);
       req.flash('error', 'Terjadi kesalahan saat memuat data transaksi');
-      return res.redirect('/admin/dashboard');
+      return res.redirect('/admin/transaksi');
     }
 
     res.render('admin/transaksi', {
