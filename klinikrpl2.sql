@@ -23,17 +23,6 @@ SET time_zone = "+00:00";
 
 -- --------------------------------------------------------
 
-CREATE TABLE `dokter_pasien` (
-  `idDokterPasien` INT(11) NOT NULL AUTO_INCREMENT,
-  `dokterId` INT(11) NOT NULL,
-  `pasienId` INT(11) NOT NULL,
-  `tanggalKunjungan` DATETIME NOT NULL,
-  PRIMARY KEY (`idDokterPasien`),
-  FOREIGN KEY (`dokterId`) REFERENCES `user` (`idUser`) ON DELETE CASCADE,
-  FOREIGN KEY (`pasienId`) REFERENCES `user` (`idUser`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-
 --
 -- Table structure for table `booking`
 --
@@ -199,9 +188,6 @@ INSERT INTO `user` (`idUser`, `namaUser`, `email`, `password`, `tanggalLahir`, `
 (15, 'sava', 'sava@gmail.com', '$2a$10$0aSq6OWUMoxXpmonkRSBseff5UEaTze8XvsST.Vyonfz1da/EW.6e', '2012-12-12', 'koper', '0822', 'pasien');
 
 
-
-
-
 --
 
 --
@@ -214,15 +200,11 @@ ADD COLUMN `tekanan_darah` VARCHAR(20) DEFAULT NULL COMMENT 'Format: Sistolik/Di
 ADD COLUMN `tinggi_badan` DECIMAL(5,2) DEFAULT NULL COMMENT 'Tinggi badan dalam sentimeter',
 ADD COLUMN `berat_badan` DECIMAL(5,2) DEFAULT NULL COMMENT 'Berat badan dalam kilogram',
 ADD COLUMN `suhu_badan` DECIMAL(4,1) DEFAULT NULL COMMENT 'Suhu badan dalam derajat Celsius',
-ADD COLUMN `keluhan_pasien` TEXT DEFAULT NULL COMMENT 'Deskripsi keluhan yang dirasakan pasien',
-ADD COLUMN `dokumen_medis` VARCHAR(255) DEFAULT NULL COMMENT 'Path dokumen medis yang diunggah';
-
+ADD COLUMN `keluhan_pasien` TEXT DEFAULT NULL COMMENT 'Deskripsi keluhan yang dirasakan pasien';
 
 --
 -- Indexes for table `booking`
 --
-
-
 ALTER TABLE `booking`
   ADD PRIMARY KEY (`idBooking`),  
   ADD KEY `pasienId` (`pasienId`),
