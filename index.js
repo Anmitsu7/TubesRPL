@@ -1904,31 +1904,95 @@ app.get('/lihat-data-pasien', isAuthenticated, (req, res) => {
   );
 });
 
-app.get('/diagnosa/:idBooking', isAuthenticated, (req, res) => {
-  const { idBooking } = req.params;
+app.get('/diagnosa/:id', isAuthenticated, (req, res) => {
+  const id = req.params.id;
 
-  pool.query(
-      `SELECT 
-          b.idBooking, u.namaUser AS namaPasien, d.namaUser AS namaDokter 
-      FROM booking b
-      JOIN user u ON b.pasienId = u.idUser
-      JOIN jadwal_dokter jd ON b.jadwalId = jd.idJadwal
-      JOIN user d ON jd.dokterId = d.idUser
-      WHERE b.idBooking = ?`,
-      [idBooking],
-      (err, results) => {
-          if (err) {
-              console.error('Error:', err);
-              return res.status(500).send('Terjadi kesalahan');
-          }
-
-          if (results.length === 0) {
-              return res.status(404).send('Data tidak ditemukan');
-          }
-
-          res.render('diagnosa', { booking: results[0] });
+  pool.query('SELECT * FROM riwayat_medis WHERE idRiwayatMedis = ?', [id], (err, result) => {
+      if (err) {
+          console.error(err);
+          req.flash('error', 'Gagal memuat data pasien.');
+          return res.redirect('/lihat-data-pasien');
       }
-  );
+
+      if (result.length === 0) {
+          req.flash('error', 'Data tidak ditemukan.');
+          return res.redirect('/lihat-data-pasien');
+      }
+
+      res.render('dokter/diagnosa', { pasien: result[0] });
+  });
+});
+
+app.post('/diagnosa/:id', isAuthenticated, (req, res) => {
+  const id = req.params.id;
+  const { diagnosa, resep, catatan } = req.body;
+
+  const query = `
+      UPDATE riwayat_medis 
+      SET diagnosa = ?, resep = ?, catatan = ?
+      WHERE idRiwayatMedis = ?
+  `;
+
+  pool.query(query, [diagnosa, resep, catatan, id], (err) => {
+      if (err) {
+          console.error(err);
+          req.flash('error', 'Gagal menyimpan diagnosa.');
+          return res.redirect(`/diagnosa/${id}`);
+      }
+
+      req.flash('success', 'Diagnosa berhasil disimpan.');
+      res.redirect('/lihat-data-pasien');
+  });
+});
+
+
+app.get('/edit-data-pasien/:id', isAuthenticated, (req, res) => {
+  const id = req.params.id;
+
+  pool.query('SELECT * FROM riwayat_medis WHERE idRiwayatMedis = ?', [id], (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send('Gagal mengambil data pasien.');
+    }
+
+    res.render('dokter/edit-data-pasien', { data: result[0] });
+  });
+});
+
+app.post('/edit-data-pasien/:id', isAuthenticated, (req, res) => {
+  const id = req.params.id;
+  const { tekanan_darah, tinggi_badan, berat_badan, suhu_badan, keluhan_pasien } = req.body;
+
+  const query = `
+    UPDATE riwayat_medis 
+    SET tekanan_darah = ?, tinggi_badan = ?, berat_badan = ?, suhu_badan = ?, keluhan_pasien = ?
+    WHERE idRiwayatMedis = ?
+  `;
+
+  pool.query(query, [tekanan_darah, tinggi_badan, berat_badan, suhu_badan, keluhan_pasien, id], (err) => {
+    if (err) {
+      console.error(err);
+      req.flash('error', 'Gagal memperbarui data pasien.');
+      return res.redirect('/lihat-data-pasien');
+    }
+
+    req.flash('success', 'Data pasien berhasil diperbarui.');
+    res.redirect('/lihat-data-pasien');
+  });
+});
+app.post('/delete-data-pasien/:id', isAuthenticated, (req, res) => {
+  const id = req.params.id;
+
+  pool.query('DELETE FROM riwayat_medis WHERE idRiwayatMedis = ?', [id], (err) => {
+    if (err) {
+      console.error(err);
+      req.flash('error', 'Gagal menghapus data pasien.');
+      return res.redirect('/lihat-data-pasien');
+    }
+
+    req.flash('success', 'Data pasien berhasil dihapus.');
+    res.redirect('/lihat-data-pasien');
+  });
 });
 
 //-------------------------------------------------------------------------------------------------
