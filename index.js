@@ -1214,7 +1214,6 @@ app.post('/booking', isAuthenticated, (req, res) => {
 
 
 //-------------------------------------------------------------------------------------------------
-//rute dokter
 app.get('/halaman-dokter', async (req, res) => {
   try {
     // Cek session
@@ -1224,7 +1223,7 @@ app.get('/halaman-dokter', async (req, res) => {
 
     const dokterId = req.session.user.idUser;
 
-    // Query untuk data dokter dengan pengecekan role yang lebih detail
+    // Query untuk data dokter
     const queryDokter = `
       SELECT 
         idUser,
@@ -1238,7 +1237,7 @@ app.get('/halaman-dokter', async (req, res) => {
       WHERE idUser = ? AND role = 'dokter'
     `;
 
-    // Query untuk daftar pasien hari ini
+    // Query untuk daftar pasien hari ini + diagnosa
     const queryPasien = `
       SELECT 
         u.namaUser as pasien,
@@ -1247,12 +1246,13 @@ app.get('/halaman-dokter', async (req, res) => {
         b.metodePendaftaran,
         b.status,
         b.nomorAntrian,
-        b.statusAntrian 
+        rm.diagnosa
       FROM booking b
       JOIN user u ON b.pasienId = u.idUser
+      LEFT JOIN riwayat_medis rm ON u.idUser = rm.idPasien
       JOIN jadwal_dokter jd ON b.jadwalId = jd.idJadwal
-      WHERE jd.dokterId = ?
-      AND DATE(b.tanggalBooking) = CURDATE() 
+      WHERE jd.dokterId = ? 
+      AND DATE(b.tanggalBooking) = CURDATE()
       AND b.status = 'aktif'
       ORDER BY b.nomorAntrian ASC
     `;
@@ -1278,7 +1278,6 @@ app.get('/halaman-dokter', async (req, res) => {
         END ASC
     `;
 
-    // Membuat fungsi query dengan Promise
     const queryAsync = (query, params) => {
       return new Promise((resolve, reject) => {
         pool.query(query, params, (err, results) => {
@@ -1288,36 +1287,22 @@ app.get('/halaman-dokter', async (req, res) => {
       });
     };
 
-    // Eksekusi query dokter
     const dokterResult = await queryAsync(queryDokter, [dokterId]);
 
-    // Validasi dokter
     if (dokterResult.length === 0) {
       return res.status(403).send('Akses ditolak: Anda tidak memiliki akses sebagai dokter');
     }
 
-    // Eksekusi query pasien dan jadwal
     const [pasienResult, jadwalResult] = await Promise.all([
       queryAsync(queryPasien, [dokterId]),
       queryAsync(queryJadwal, [dokterId])
     ]);
 
-    // Format tanggal lahir
-    if (dokterResult[0].tanggalLahir) {
-      dokterResult[0].tanggalLahir = new Date(dokterResult[0].tanggalLahir)
-        .toLocaleDateString('id-ID', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric'
-        });
-    }
-
-    // Format tanggal booking
+    // Format tanggal
     const formattedPasienResult = pasienResult.map(pasien => ({
       ...pasien,
       tanggalBooking: pasien.tanggalBooking
-        ? new Date(pasien.tanggalBooking)
-          .toLocaleDateString('id-ID', {
+        ? new Date(pasien.tanggalBooking).toLocaleDateString('id-ID', {
             day: 'numeric',
             month: 'long',
             year: 'numeric',
@@ -1327,19 +1312,18 @@ app.get('/halaman-dokter', async (req, res) => {
         : null
     }));
 
-    // Render halaman dengan semua data
     res.render('dokter/halaman-dokter', {
       user: req.session.user,
       daftarPasien: formattedPasienResult,
       jadwal: jadwalResult,
       dokter: dokterResult[0]
     });
-
   } catch (error) {
     console.error('Unexpected error:', error);
     res.status(500).send('Terjadi kesalahan yang tidak terduga');
   }
 });
+
 
 app.get('/riwayat_medis', (req, res) => {
   // Cek apakah user sudah login
@@ -1665,7 +1649,7 @@ app.post('/perawat/halaman-perawat', isAuthenticated, (req, res) => {
 
   const { bookingId, currentStatus, catatan, diagnosa } = req.body;
 
-  // Determine next status
+  // Tentukan status baru berdasarkan currentStatus
   let newStatus;
   if (currentStatus === 'menunggu') {
     newStatus = 'dipanggil';
@@ -1676,6 +1660,7 @@ app.post('/perawat/halaman-perawat', isAuthenticated, (req, res) => {
     return res.redirect('/perawat/halaman-perawat');
   }
 
+  // Update status booking
   const updateQuery = `
     UPDATE booking 
     SET statusAntrian = ?, 
@@ -1690,27 +1675,31 @@ app.post('/perawat/halaman-perawat', isAuthenticated, (req, res) => {
       return res.redirect('/perawat/halaman-perawat');
     }
 
-    // If 'dipanggil' status, insert medical record
+    // Jika status booking menjadi 'selesai', lakukan update pada rekam medis
     if (newStatus === 'selesai') {
       const insertMedicalRecordQuery = `
         INSERT INTO rekam_medis (bookingId, catatan, diagnosa, perawatId, tanggalPemeriksaan)
         VALUES (?, ?, ?, ?, NOW())
       `;
 
-      pool.query(insertMedicalRecordQuery, [
-        bookingId,
+      pool.query(updateMedicalRecordQuery, [
         catatan || null,
         diagnosa || null,
-        req.session.user.idUser
+        req.session.user.idUser, // Ambil perawatId dari session user
+        bookingId
       ], (medicalRecordErr) => {
         if (medicalRecordErr) {
-          console.error('Error inserting medical record:', medicalRecordErr);
+          console.error('Error updating medical record:', medicalRecordErr);
+          req.flash('error', 'Gagal memperbarui rekam medis');
+          return res.redirect('/perawat/halaman-perawat');
         }
 
-        req.flash('success', 'Status booking berhasil diupdate');
+        // Beri feedback sukses dan arahkan kembali ke halaman perawat
+        req.flash('success', 'Status booking berhasil diupdate dan rekam medis berhasil diperbarui');
         res.redirect('/perawat/halaman-perawat');
       });
     } else {
+      // Jika status tidak perlu diperbarui, beri feedback sukses
       req.flash('success', 'Status booking berhasil diupdate');
       res.redirect('/perawat/halaman-perawat');
     }
@@ -1737,7 +1726,13 @@ const upload = multer({ storage });
 app.get('/catat-rekam-medis/:idBooking', isAuthenticated, (req, res) => {
   const { idBooking } = req.params;
 
-  // First, fetch the booking details
+  // Validasi idBooking
+  console.log('Received idBooking:', idBooking);
+  if (!idBooking || isNaN(idBooking)) {
+    req.flash('error', 'ID Booking tidak valid');
+    return res.redirect('/dashboard');
+  }
+
   pool.query(
     `SELECT 
       b.idBooking, b.nomorAntrian, b.statusAntrian, 
@@ -1765,7 +1760,8 @@ app.get('/catat-rekam-medis/:idBooking', isAuthenticated, (req, res) => {
         return res.redirect('/dashboard');
       }
 
-      // Then, fetch the list of patients
+      console.log('Booking Results:', bookingResults);
+
       pool.query(
         `SELECT idUser, namaUser 
          FROM user 
@@ -1779,7 +1775,7 @@ app.get('/catat-rekam-medis/:idBooking', isAuthenticated, (req, res) => {
 
           res.render('perawat/catat-rekam-medis', {
             booking: bookingResults[0],
-            patients: patients, // Now patients is correctly defined
+            patients: patients,
             messages: {
               error: req.flash('error'),
               success: req.flash('success')
@@ -1790,6 +1786,32 @@ app.get('/catat-rekam-medis/:idBooking', isAuthenticated, (req, res) => {
     }
   );
 });
+
+app.post('/catat-rekam-medis', isAuthenticated, (req, res) => {
+  const { idBooking, diagnosa } = req.body;
+
+  if (!idBooking || !diagnosa) {
+    req.flash('error', 'Data tidak lengkap');
+    return res.redirect(`/catat-rekam-medis/${idBooking}`);
+  }
+
+  pool.query(
+    `INSERT INTO riwayat_medis (idBooking, diagnosa, tanggal)
+     VALUES (?, ?, NOW())`,
+    [idBooking, diagnosa],
+    (err) => {
+      if (err) {
+        console.error('Error inserting medical record:', err);
+        req.flash('error', 'Gagal menyimpan rekam medis');
+        return res.redirect(`/catat-rekam-medis/${idBooking}`);
+      }
+
+      req.flash('success', 'Rekam medis berhasil disimpan');
+      res.redirect('/perawat/halaman-perawat');
+    }
+  );
+});
+
 
 // Route untuk menangani form rekam medis
 // Route untuk menangani form rekam medis
@@ -1864,6 +1886,115 @@ app.post('/perawat/catat-rekam-medis', isAuthenticated, upload.single('dokumenMe
     }
   );
 });
+
+app.get('/lihat-data-pasien', isAuthenticated, (req, res) => {
+  pool.query(
+      `SELECT 
+          rm.idRiwayatMedis, u.namaUser AS namaPasien, rm.tanggal, rm.tekanan_darah, 
+          rm.tinggi_badan, rm.berat_badan, rm.suhu_badan, rm.keluhan_pasien, rm.dokumen_medis
+       FROM riwayat_medis rm
+       JOIN user u ON rm.idPasien = u.idUser`,
+      (err, results) => {
+          if (err) {
+              console.error('Error:', err);
+              return res.status(500).send('Gagal mengambil data pasien');
+          }
+          res.render('dokter/lihat-data-pasien', { riwayatMedis: results });
+      }
+  );
+});
+
+app.get('/diagnosa/:id', isAuthenticated, (req, res) => {
+  const id = req.params.id;
+
+  pool.query('SELECT * FROM riwayat_medis WHERE idRiwayatMedis = ?', [id], (err, result) => {
+      if (err) {
+          console.error(err);
+          req.flash('error', 'Gagal memuat data pasien.');
+          return res.redirect('/lihat-data-pasien');
+      }
+
+      if (result.length === 0) {
+          req.flash('error', 'Data tidak ditemukan.');
+          return res.redirect('/lihat-data-pasien');
+      }
+
+      res.render('dokter/diagnosa', { pasien: result[0] });
+  });
+});
+
+app.post('/diagnosa/:id', isAuthenticated, (req, res) => {
+  const id = req.params.id;
+  const { diagnosa, resep, catatan } = req.body;
+
+  const query = `
+      UPDATE riwayat_medis 
+      SET diagnosa = ?, resep = ?, catatan = ?
+      WHERE idRiwayatMedis = ?
+  `;
+
+  pool.query(query, [diagnosa, resep, catatan, id], (err) => {
+      if (err) {
+          console.error(err);
+          req.flash('error', 'Gagal menyimpan diagnosa.');
+          return res.redirect(`/diagnosa/${id}`);
+      }
+
+      req.flash('success', 'Diagnosa berhasil disimpan.');
+      res.redirect('/lihat-data-pasien');
+  });
+});
+
+
+app.get('/edit-data-pasien/:id', isAuthenticated, (req, res) => {
+  const id = req.params.id;
+
+  pool.query('SELECT * FROM riwayat_medis WHERE idRiwayatMedis = ?', [id], (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send('Gagal mengambil data pasien.');
+    }
+
+    res.render('dokter/edit-data-pasien', { data: result[0] });
+  });
+});
+
+app.post('/edit-data-pasien/:id', isAuthenticated, (req, res) => {
+  const id = req.params.id;
+  const { tekanan_darah, tinggi_badan, berat_badan, suhu_badan, keluhan_pasien } = req.body;
+
+  const query = `
+    UPDATE riwayat_medis 
+    SET tekanan_darah = ?, tinggi_badan = ?, berat_badan = ?, suhu_badan = ?, keluhan_pasien = ?
+    WHERE idRiwayatMedis = ?
+  `;
+
+  pool.query(query, [tekanan_darah, tinggi_badan, berat_badan, suhu_badan, keluhan_pasien, id], (err) => {
+    if (err) {
+      console.error(err);
+      req.flash('error', 'Gagal memperbarui data pasien.');
+      return res.redirect('/lihat-data-pasien');
+    }
+
+    req.flash('success', 'Data pasien berhasil diperbarui.');
+    res.redirect('/lihat-data-pasien');
+  });
+});
+app.post('/delete-data-pasien/:id', isAuthenticated, (req, res) => {
+  const id = req.params.id;
+
+  pool.query('DELETE FROM riwayat_medis WHERE idRiwayatMedis = ?', [id], (err) => {
+    if (err) {
+      console.error(err);
+      req.flash('error', 'Gagal menghapus data pasien.');
+      return res.redirect('/lihat-data-pasien');
+    }
+
+    req.flash('success', 'Data pasien berhasil dihapus.');
+    res.redirect('/lihat-data-pasien');
+  });
+});
+
 //-------------------------------------------------------------------------------------------------
 // Start server
 app.listen(PORT, () => {
