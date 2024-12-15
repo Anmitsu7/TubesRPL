@@ -124,27 +124,28 @@
             margin-bottom: 20px;
         }
 
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 16px;
-            color: #333;
-            margin-bottom: 5px;
-        }
-
-        .form-group input, .form-group textarea {
+        table {
             width: 100%;
-            padding: 10px;
-            font-size: 16px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
+            border-collapse: collapse;
+            margin-top: 20px;
         }
 
-        .form-group textarea {
-            resize: vertical;
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f1f1f1;
+            color: #333;
+        }
+
+        td {
+            color: #666;
         }
 
         .btn {
@@ -184,6 +185,7 @@
         <h1>Klinik SehatCare</h1>
         <nav>
             <a href="/logout">Log Out</a>
+            <a href="/riwayat-medis">Riwayat Medis</a>
             <div class="profile">
                 <img src="https://via.placeholder.com/40" alt="Dokter Profile">
                 <span><%= user.namaUser || 'Dokter' %></span>
@@ -199,57 +201,313 @@
     </section>
 
     <div class="container">
-        <h3>Informasi Pasien</h3>
-        <p><strong>ID Pasien:</strong> <span id="idPasien">12345</span></p>
-        <p><strong>Nama Pasien:</strong> <span id="namaPasien">John Doe</span></p>
-        <p><strong>Nama Dokter:</strong> <span id="namaDokter">Dr. <%= user.namaUser %></span></p>
-        <p><strong>Tanggal Pemeriksaan:</strong> <span id="tglPemeriksaan">12-12-2024</span></p>
-
-        <h3>Formulir Pemeriksaan</h3>
-        <form>
-            <div class="form-group">
-                <label for="diagnosa">Diagnosa</label>
-                <textarea id="diagnosa" rows="4" placeholder="Masukkan diagnosa..."></textarea>
-            </div>
-            <div class="form-group">
-                <label for="resep">Resep</label>
-                <textarea id="resep" rows="4" placeholder="Masukkan resep obat..."></textarea>
-            </div>
-            <div class="form-group">
-                <label for="catatan">Catatan</label>
-                <textarea id="catatan" rows="4" placeholder="Masukkan catatan tambahan..."></textarea>
-            </div>
-            <button type="button" class="btn" onclick="simpanData()">Simpan</button>
-        </form>
+        <h3>Riwayat Medis Pasien</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID Pasien</th>
+                    <th>Nama Pasien</th>
+                    <th>Tekanan Darah</th>
+                    <th>Tinggi Badan (cm)</th>
+                    <th>Berat Badan (kg)</th>
+                    <th>Suhu Badan (°C)</th>
+                    <th>Keluhan Pasien</th>
+                    <th>Dokumen Medis</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% riwayatMedis.forEach(function(item) { %>
+                    <tr>
+                        <td><%= item.idPasien %></td>
+                        <td><%= item.namaPasien %></td>
+                        <td><%= item.tekanan_darah %></td>
+                        <td><%= item.tinggi_badan %></td>
+                        <td><%= item.berat_badan %></td>
+                        <td><%= item.suhu_badan %></td>
+                        <td><%= item.keluhan_pasien %></td>
+                        <td><%= item.dokumen_medis %></td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
     </div>
 
     <footer>
-        <p>&copy; 2024 Klinik SehatCare. All rights reserved.</p>
+        <p>&copy; 2024 Klinik SehatCare. All rights reserved.</p><!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Dokter - Home Page</title>
+            <link rel="stylesheet" href="public/css/halaman-dokter.css">
+            <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+            <style>
+                * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                }
+        
+                body {
+                    font-family: 'Poppins', sans-serif;
+                    background-color: #f5f5f5;
+                    padding-bottom: 80px;
+                    color: #333;
+                }
+        
+                header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 20px 50px;
+                    background-color: #fff;
+                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                    border-bottom: 2px solid #007bff;
+                    position: fixed;
+                    top: 0;
+                    width: 100%;
+                    z-index: 1000;
+                }
+        
+                header h1 {
+                    font-size: 28px;
+                    color: #007bff;
+                    font-weight: 600;
+                }
+        
+                header nav {
+                    display: flex;
+                    align-items: center;
+                    gap: 30px;
+                }
+        
+                header nav a {
+                    text-decoration: none;
+                    color: #333;
+                    font-size: 16px;
+                    font-weight: 500;
+                    transition: color 0.3s ease, transform 0.3s ease;
+                }
+        
+                header nav a:hover {
+                    color: #007bff;
+                    transform: translateY(-2px);
+                }
+        
+                header .profile {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                }
+        
+                header .profile img {
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    transition: transform 0.3s ease;
+                }
+        
+                header .profile img:hover {
+                    transform: scale(1.1);
+                }
+        
+                header .profile span {
+                    font-size: 16px;
+                    color: #333;
+                }
+        
+                .hero {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 100px 50px 50px;
+                    background: linear-gradient(135deg, #007bff, #6c757d);
+                    border-radius: 20px;
+                    margin-top: 80px;
+                    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+                }
+        
+                .hero-text {
+                    max-width: 50%;
+                }
+        
+                .hero-text h2 {
+                    font-size: 42px;
+                    color: #fff;
+                    margin-bottom: 20px;
+                    font-weight: 600;
+                }
+        
+                .hero-text p {
+                    font-size: 18px;
+                    color: #dfe4ea;
+                    margin-bottom: 20px;
+                }
+        
+                .container {
+                    margin: 40px auto;
+                    padding: 20px;
+                    background-color: #fff;
+                    border-radius: 10px;
+                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                    width: 80%;
+                }
+        
+                .container h3 {
+                    font-size: 24px;
+                    color: #333;
+                    margin-bottom: 20px;
+                }
+        
+                .form-group {
+                    margin-bottom: 15px;
+                }
+        
+                .form-group label {
+                    display: block;
+                    font-size: 16px;
+                    color: #333;
+                    margin-bottom: 5px;
+                }
+        
+                .form-group input, .form-group textarea {
+                    width: 100%;
+                    padding: 10px;
+                    font-size: 16px;
+                    border: 1px solid #ccc;
+                    border-radius: 5px;
+                }
+        
+                .form-group textarea {
+                    resize: vertical;
+                }
+        
+                .btn {
+                    background-color: #007bff;
+                    color: #fff;
+                    padding: 10px 20px;
+                    border: none;
+                    border-radius: 5px;
+                    font-size: 16px;
+                    cursor: pointer;
+                    transition: background-color 0.3s ease;
+                }
+        
+                .btn:hover {
+                    background-color: #0056b3;
+                }
+        
+                footer {
+                    position: fixed;
+                    text-align: center;
+                    bottom: 0;
+                    width: 100%;
+                    padding: 20px;
+                    background-color: #fff;
+                    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+                }
+        
+                footer p {
+                    font-size: 14px;
+                    color: #777;
+                }
+        
+            </style>
+        </head>
+        <body>
+            <header>
+                <h1>Klinik SehatCare</h1>
+                <nav>
+                    <a href="/diagnosa">Diagnosa</a>
+                    <a href="/logout">Log Out</a>
+                    <div class="profile">
+                        <img src="https://via.placeholder.com/40" alt="Dokter Profile">
+                        <span><%= user.namaUser || 'Dokter' %></span>
+                    </div>
+                </nav>
+            </header>
+        
+            <section class="hero">
+                <div class="hero-text">
+                    <h2>Selamat Datang, <%= user.namaUser || 'Dokter' %>!</h2>
+                    <p>Berikan layanan kesehatan terbaik untuk pasien Anda.</p>
+                </div>
+            </section>
+        
+            <div class="container">
+                <h3>Informasi Pasien</h3>
+                <p><strong>ID Pasien:</strong> <span id="idPasien"><%= pasien.id %></span></p>
+                <p><strong>Nama Pasien:</strong> <span id="namaPasien"><%= pasien.nama %></span></p>
+                <p><strong>Nama Dokter:</strong> <span id="namaDokter">Dr. <%= user.namaUser %></span></p>
+                <p><strong>Tanggal Pemeriksaan:</strong> <span id="tglPemeriksaan"><%= pasien.tglPemeriksaan %></span></p>
+                <br>
+                <h3>Riwayat Medis</h3>
+                <% riwayatMedis.forEach((riwayat) => { %>
+                    <div class="riwayat-item">
+                        <p><strong>Tanggal:</strong> <%= riwayat.tanggal %></p>
+                        <p><strong>Tekanan Darah:</strong> <%= riwayat.tekanan_darah %></p>
+                        <p><strong>Tinggi Badan:</strong> <%= riwayat.tinggi_badan %> cm</p>
+                        <p><strong>Berat Badan:</strong> <%= riwayat.berat_badan %> kg</p>
+                        <p><strong>Suhu Badan:</strong> <%= riwayat.suhu_badan %> °C</p>
+                        <p><strong>Keluhan:</strong> <%= riwayat.keluhan_pasien %></p>
+                        <hr>
+                    </div>
+                <% }) %>
+                <br>
+                <br>
+                <h3>Formulir Pemeriksaan</h3>
+                <form>
+                    <div class="form-group">
+                        <label for="diagnosa">Diagnosa</label>
+                        <textarea id="diagnosa" rows="4" placeholder="Masukkan diagnosa..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="resep">Resep</label>
+                        <textarea id="resep" rows="4" placeholder="Masukkan resep obat..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="catatan">Catatan</label>
+                        <textarea id="catatan" rows="4" placeholder="Masukkan catatan tambahan..."></textarea>
+                    </div>
+                    <button type="button" class="btn" onclick="simpanData()">Simpan</button>
+                </form>
+            </div>
+        
+            <footer>
+                <p>&copy; 2024 Klinik SehatCare. All rights reserved.</p>
+            </footer>
+        
+            <script>
+                function simpanData() {
+                    const diagnosa = document.getElementById('diagnosa').value;
+                    const resep = document.getElementById('resep').value;
+                    const catatan = document.getElementById('catatan').value;
+        
+                    if (!diagnosa || !resep || !catatan) {
+                        alert('Harap lengkapi semua bidang sebelum menyimpan.');
+                        return;
+                    }
+        
+                    console.log('Data Tersimpan:', {
+                        idPasien: document.getElementById('idPasien').textContent,
+                        namaPasien: document.getElementById('namaPasien').textContent,
+                        namaDokter: document.getElementById('namaDokter').textContent,
+                        tglPemeriksaan: document.getElementById('tglPemeriksaan').textContent,
+                        diagnosa,
+                        resep,
+                        catatan
+                    });
+        
+                    alert('Data berhasil disimpan!');
+                }
+            </script>
+        </body>
+        </html>
+        
     </footer>
 
     <script>
-        function simpanData() {
-            const diagnosa = document.getElementById('diagnosa').value;
-            const resep = document.getElementById('resep').value;
-            const catatan = document.getElementById('catatan').value;
-
-            if (!diagnosa || !resep || !catatan) {
-                alert('Harap lengkapi semua bidang sebelum menyimpan.');
-                return;
-            }
-
-            console.log('Data Tersimpan:', {
-                idPasien: document.getElementById('idPasien').textContent,
-                namaPasien: document.getElementById('namaPasien').textContent,
-                namaDokter: document.getElementById('namaDokter').textContent,
-                tglPemeriksaan: document.getElementById('tglPemeriksaan').textContent,
-                diagnosa,
-                resep,
-                catatan
-            });
-
-            alert('Data berhasil disimpan!');
-        }
+        // Jika diperlukan, Anda dapat menambahkan fungsi JavaScript lainnya di sini
     </script>
 </body>
 </html>
