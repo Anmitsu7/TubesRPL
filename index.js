@@ -386,7 +386,28 @@ app.get('/pasien/riwayat-medis', isAuthenticated, (req, res) => {
   );
 });
 
+app.get('/pasien/riwayat-pembayaran', isAuthenticated, (req, res) => {
+  const userId = req.session.user.idUser;
 
+  pool.query(
+    'SELECT * FROM transaksi WHERE idPasien = ? ORDER BY tanggal DESC',
+    [userId],
+    (err, results) => {
+      if (err) {
+        console.error('Error fetching transaction history:', err);
+        return res.status(500).send('Server error');
+      }
+
+      console.log('Number of transaction history records:', results.length);
+      console.log('Transaction history results:', results);
+
+      res.render('pasien/riwayat-pembayaran', {
+        user: req.session.user,
+        riwayatMedis: results,
+      });
+    }
+  );
+});
 
 //-------------------------------------------------------------------------------------------------
 // Admin Routes

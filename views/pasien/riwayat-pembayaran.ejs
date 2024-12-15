@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Riwayat Pembayaran</title>
+    <link rel="stylesheet" href="/css/riwayat-pembayaran.css">
+</head>
+<body>
+    <header>
+        <h1>Riwayat Pembayaran</h1>
+    </header>
+    <div class="payment-history-container">
+        <h2>Histori Pembayaran</h2>
+        <% if (transactions && transactions.length > 0) { %>
+            <table class="payment-history-table">
+                <thead>
+                    <tr>
+                        <th>Tanggal</th>
+                        <th>Dokter</th>
+                        <th>Total Biaya</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% transactions.forEach(function(transaksi) { %>
+                        <tr>
+                            <td><%= new Date(transaksi.tanggal).toLocaleDateString('id-ID') %></td>
+                            <td><%= transaksi.namaDokter %></td>
+                            <td>Rp <%= transaksi.totalBiaya.toLocaleString('id-ID') %></td>
+                            <td>
+                                <span class="<%= 
+                                    transaksi.status === 'Lunas' ? 'status-lunas' : 
+                                    transaksi.status === 'Pending' ? 'status-pending' : 
+                                    'status-batal'
+                                %>">
+                                    <%= transaksi.status %>
+                                </span>
+                            </td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        <% } else { %>
+            <div class="no-transactions">
+                <p>Tidak ada riwayat transaksi pembayaran.</p>
+            </div>
+        <% } %>
+    </div>
+</body>
+</html>
