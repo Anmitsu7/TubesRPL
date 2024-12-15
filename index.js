@@ -1726,7 +1726,13 @@ const upload = multer({ storage });
 app.get('/catat-rekam-medis/:idBooking', isAuthenticated, (req, res) => {
   const { idBooking } = req.params;
 
-  // First, fetch the booking details
+  // Validasi idBooking
+  console.log('Received idBooking:', idBooking);
+  if (!idBooking || isNaN(idBooking)) {
+    req.flash('error', 'ID Booking tidak valid');
+    return res.redirect('/dashboard');
+  }
+
   pool.query(
     `SELECT 
       b.idBooking, b.nomorAntrian, b.statusAntrian, 
@@ -1754,7 +1760,8 @@ app.get('/catat-rekam-medis/:idBooking', isAuthenticated, (req, res) => {
         return res.redirect('/dashboard');
       }
 
-      // Then, fetch the list of patients
+      console.log('Booking Results:', bookingResults);
+
       pool.query(
         `SELECT idUser, namaUser 
          FROM user 
@@ -1768,7 +1775,7 @@ app.get('/catat-rekam-medis/:idBooking', isAuthenticated, (req, res) => {
 
           res.render('perawat/catat-rekam-medis', {
             booking: bookingResults[0],
-            patients: patients, // Now patients is correctly defined
+            patients: patients,
             messages: {
               error: req.flash('error'),
               success: req.flash('success')
@@ -1779,6 +1786,7 @@ app.get('/catat-rekam-medis/:idBooking', isAuthenticated, (req, res) => {
     }
   );
 });
+
 app.post('/catat-rekam-medis', isAuthenticated, (req, res) => {
   const { idBooking, diagnosa } = req.body;
 
@@ -1878,6 +1886,51 @@ app.post('/perawat/catat-rekam-medis', isAuthenticated, upload.single('dokumenMe
     }
   );
 });
+
+app.get('/lihat-data-pasien', isAuthenticated, (req, res) => {
+  pool.query(
+      `SELECT 
+          rm.idRiwayatMedis, u.namaUser AS namaPasien, rm.tanggal, rm.tekanan_darah, 
+          rm.tinggi_badan, rm.berat_badan, rm.suhu_badan, rm.keluhan_pasien, rm.dokumen_medis
+       FROM riwayat_medis rm
+       JOIN user u ON rm.idPasien = u.idUser`,
+      (err, results) => {
+          if (err) {
+              console.error('Error:', err);
+              return res.status(500).send('Gagal mengambil data pasien');
+          }
+          res.render('dokter/lihat-data-pasien', { riwayatMedis: results });
+      }
+  );
+});
+
+app.get('/diagnosa/:idBooking', isAuthenticated, (req, res) => {
+  const { idBooking } = req.params;
+
+  pool.query(
+      `SELECT 
+          b.idBooking, u.namaUser AS namaPasien, d.namaUser AS namaDokter 
+      FROM booking b
+      JOIN user u ON b.pasienId = u.idUser
+      JOIN jadwal_dokter jd ON b.jadwalId = jd.idJadwal
+      JOIN user d ON jd.dokterId = d.idUser
+      WHERE b.idBooking = ?`,
+      [idBooking],
+      (err, results) => {
+          if (err) {
+              console.error('Error:', err);
+              return res.status(500).send('Terjadi kesalahan');
+          }
+
+          if (results.length === 0) {
+              return res.status(404).send('Data tidak ditemukan');
+          }
+
+          res.render('diagnosa', { booking: results[0] });
+      }
+  );
+});
+
 //-------------------------------------------------------------------------------------------------
 // Start server
 app.listen(PORT, () => {
