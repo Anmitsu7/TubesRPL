@@ -1665,7 +1665,7 @@ app.post('/perawat/halaman-perawat', isAuthenticated, (req, res) => {
 
   const { bookingId, currentStatus, catatan, diagnosa } = req.body;
 
-  // Determine next status
+  // Tentukan status baru berdasarkan currentStatus
   let newStatus;
   if (currentStatus === 'menunggu') {
     newStatus = 'dipanggil';
@@ -1676,6 +1676,7 @@ app.post('/perawat/halaman-perawat', isAuthenticated, (req, res) => {
     return res.redirect('/perawat/halaman-perawat');
   }
 
+  // Update status booking
   const updateQuery = `
     UPDATE booking 
     SET statusAntrian = ?, 
@@ -1690,27 +1691,31 @@ app.post('/perawat/halaman-perawat', isAuthenticated, (req, res) => {
       return res.redirect('/perawat/halaman-perawat');
     }
 
-    // If 'dipanggil' status, insert medical record
+    // Jika status booking menjadi 'selesai', lakukan update pada rekam medis
     if (newStatus === 'selesai') {
       const insertMedicalRecordQuery = `
         INSERT INTO rekam_medis (bookingId, catatan, diagnosa, perawatId, tanggalPemeriksaan)
         VALUES (?, ?, ?, ?, NOW())
       `;
 
-      pool.query(insertMedicalRecordQuery, [
-        bookingId,
+      pool.query(updateMedicalRecordQuery, [
         catatan || null,
         diagnosa || null,
-        req.session.user.idUser
+        req.session.user.idUser, // Ambil perawatId dari session user
+        bookingId
       ], (medicalRecordErr) => {
         if (medicalRecordErr) {
-          console.error('Error inserting medical record:', medicalRecordErr);
+          console.error('Error updating medical record:', medicalRecordErr);
+          req.flash('error', 'Gagal memperbarui rekam medis');
+          return res.redirect('/perawat/halaman-perawat');
         }
 
-        req.flash('success', 'Status booking berhasil diupdate');
+        // Beri feedback sukses dan arahkan kembali ke halaman perawat
+        req.flash('success', 'Status booking berhasil diupdate dan rekam medis berhasil diperbarui');
         res.redirect('/perawat/halaman-perawat');
       });
     } else {
+      // Jika status tidak perlu diperbarui, beri feedback sukses
       req.flash('success', 'Status booking berhasil diupdate');
       res.redirect('/perawat/halaman-perawat');
     }

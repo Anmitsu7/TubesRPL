@@ -23,6 +23,17 @@ SET time_zone = "+00:00";
 
 -- --------------------------------------------------------
 
+CREATE TABLE `dokter_pasien` (
+  `idDokterPasien` INT(11) NOT NULL AUTO_INCREMENT,
+  `dokterId` INT(11) NOT NULL,
+  `pasienId` INT(11) NOT NULL,
+  `tanggalKunjungan` DATETIME NOT NULL,
+  PRIMARY KEY (`idDokterPasien`),
+  FOREIGN KEY (`dokterId`) REFERENCES `user` (`idUser`) ON DELETE CASCADE,
+  FOREIGN KEY (`pasienId`) REFERENCES `user` (`idUser`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
 --
 -- Table structure for table `booking`
 --
@@ -186,6 +197,9 @@ INSERT INTO `user` (`idUser`, `namaUser`, `email`, `password`, `tanggalLahir`, `
 (13, 'Dr. Amanda Lopez', 'amanda.lopez@klinik.com', '$2a$10$DEF102', '1988-11-30', 'Jl. Mawar No. 22', '081234567893', 'dokter'),
 (14, 'Dr. David Kim', 'david.kim@klinik.com', '$2a$10$GHI103', '1979-09-05', 'Jl. Dahlia No. 45', '081234567894', 'dokter'),
 (15, 'sava', 'sava@gmail.com', '$2a$10$0aSq6OWUMoxXpmonkRSBseff5UEaTze8XvsST.Vyonfz1da/EW.6e', '2012-12-12', 'koper', '0822', 'pasien');
+
+
+
 
 
 --
