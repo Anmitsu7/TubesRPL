@@ -1,12 +1,12 @@
-import express from 'express';
+import bcrypt from 'bcryptjs';
 import bodyParser from 'body-parser';
+import crypto from 'crypto';
+import express from 'express';
+import flash from 'express-flash';
+import mysqlSession from 'express-mysql-session';
+import session from 'express-session';
 import mysql from 'mysql';
 import path from 'path';
-import bcrypt from 'bcryptjs';
-import session from 'express-session';
-import flash from 'express-flash';
-import crypto from 'crypto';
-import mysqlSession from 'express-mysql-session';
 
 const MySQLStore = mysqlSession(session);
 const app = express();
@@ -1341,7 +1341,7 @@ app.get('/halaman-dokter', async (req, res) => {
   }
 });
 
-app.get('/diagnosa', (req, res) => {
+app.get('/riwayat_medis', (req, res) => {
   // Cek apakah user sudah login
   if (!req.session.user) {
     return res.redirect('/login');
@@ -1352,7 +1352,7 @@ app.get('/diagnosa', (req, res) => {
     return res.status(403).send('Akses ditolak');
   }
 
-  // Query untuk mengambil data hasil diagnosa
+  // Query untuk mengambil data riwayat medis
   const query = `
     SELECT 
       rm.idRiwayatMedis,
@@ -1740,16 +1740,18 @@ app.get('/catat-rekam-medis/:idBooking', isAuthenticated, (req, res) => {
   // First, fetch the booking details
   pool.query(
     `SELECT 
-        b.idBooking, b.nomorAntrian, b.statusAntrian, 
-        p.namaUser AS namaPasien, d.namaUser AS namaDokter
-     FROM 
-        booking b
-     JOIN 
-        user p ON b.pasienId = p.idUser
-     JOIN 
-        user d ON b.jadwalId = d.idUser
-     WHERE 
-        b.idBooking = ?`,
+      b.idBooking, b.nomorAntrian, b.statusAntrian, 
+      p.namaUser AS namaPasien, d.namaUser AS namaDokter
+    FROM 
+      booking b
+    JOIN 
+      user p ON b.pasienId = p.idUser
+    JOIN 
+      jadwal_dokter jd ON b.jadwalId = jd.idJadwal
+    JOIN 
+      user d ON jd.dokterId = d.idUser
+    WHERE 
+      b.idBooking = ?`,
     [idBooking],
     (bookingError, bookingResults) => {
       if (bookingError) {

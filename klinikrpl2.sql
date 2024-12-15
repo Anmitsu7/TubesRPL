@@ -200,11 +200,15 @@ ADD COLUMN `tekanan_darah` VARCHAR(20) DEFAULT NULL COMMENT 'Format: Sistolik/Di
 ADD COLUMN `tinggi_badan` DECIMAL(5,2) DEFAULT NULL COMMENT 'Tinggi badan dalam sentimeter',
 ADD COLUMN `berat_badan` DECIMAL(5,2) DEFAULT NULL COMMENT 'Berat badan dalam kilogram',
 ADD COLUMN `suhu_badan` DECIMAL(4,1) DEFAULT NULL COMMENT 'Suhu badan dalam derajat Celsius',
-ADD COLUMN `keluhan_pasien` TEXT DEFAULT NULL COMMENT 'Deskripsi keluhan yang dirasakan pasien';
+ADD COLUMN `keluhan_pasien` TEXT DEFAULT NULL COMMENT 'Deskripsi keluhan yang dirasakan pasien',
+ADD COLUMN `dokumen_medis` VARCHAR(255) DEFAULT NULL COMMENT 'Path dokumen medis yang diunggah';
+
 
 --
 -- Indexes for table `booking`
 --
+
+
 ALTER TABLE `booking`
   ADD PRIMARY KEY (`idBooking`),  
   ADD KEY `pasienId` (`pasienId`),
