@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "kill-port 3000 && nodemon index.js"
+    "start": "kill-port 3000 && nodemon index.js",
+    "test": "mocha"
   },
   "keywords": [],
   "author": "Kelompok6",
@@ -14,7 +15,6 @@
     "body-parser": "^1.20.3",
     "cookie-parser": "^1.4.7",
     "csv-parser": "^3.0.0",
-    "ejs": "^3.1.10",
     "express": "^4.21.2",
     "express-flash": "^0.0.2",
     "express-mysql-session": "^3.0.3",
@@ -31,7 +31,11 @@
   "type": "module",
   "devDependencies": {
     "autoprefixer": "^10.4.20",
+    "chai": "^5.1.2",
+    "ejs": "^3.1.10",
+    "jsdom": "^25.0.1",
     "kill-port": "^2.0.1",
+    "mocha": "^11.0.1",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.15"
   }
