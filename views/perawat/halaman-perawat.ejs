@@ -233,22 +233,21 @@
                         <td><%= booking.jamMulai %> - <%= booking.jamSelesai %></td>
                         <td><%= booking.statusAntrian %></td>
                         <td>
-                            <% if (booking.nomorAntrian && booking.statusAntrian !== 'selesai') { %>
-                                <button type="button" class="btn btn-primary btn-sm" 
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#statusModal"
-                                        data-booking-id="<%= booking.idBooking %>"
-                                        data-current-status="<%= booking.statusAntrian %>">
-                                    <% if (booking.statusAntrian === 'menunggu') { %>
-                                        Panggil Pasien
-                                    <% } else if (booking.statusAntrian === 'dipanggil') { %>
+                            <% if (booking.statusAntrian !== 'selesai') { %>
+                                <% if (booking.statusAntrian === 'menunggu') { %>
+                                    <form action="/perawat/halaman-perawat" method="POST" style="display: inline;">
+                                        <input type="hidden" name="bookingId" value="<%= booking.idBooking %>">
+                                        <input type="hidden" name="currentStatus" value="menunggu">
+                                        <button type="submit" class="btn btn-primary btn-sm">Panggil Pasien</button>
+                                    </form>
+                                <% } else if (booking.statusAntrian === 'dipanggil') { %>
+                                    <a href="/perawat/catat-rekam-medis/<%= booking.idBooking %>" class="btn btn-success btn-sm">
                                         Catat Rekam Medis
-                                    <% } else { %>
-                                        Done
-                                    <% } %>
-                                </button>
+                                    </a>
+                                <% } %>
+                            <% } else { %>
+                                <span class="badge bg-success">Selesai</span>
                             <% } %>
-                            
                         </td>
                     </tr>
                     <% }); %>

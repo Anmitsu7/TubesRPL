@@ -110,6 +110,23 @@
             border-radius: 5px;
             transition: background-color 0.3s ease;
         }
+
+        .patient-details {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .patient-details h4 {
+            color: #007bff;
+            margin-bottom: 15px;
+        }
+
+        .patient-details p {
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
     </style>
 </head>
 
@@ -120,165 +137,94 @@
             <a href="/logout" class="btn btn-outline-danger">Log Out</a>
         </nav>
     </header>
+
     <div class="container">
-        <h1>Catat Rekam Medis</h1>
-        <p>Nomor Antrian: <%= booking.nomorAntrian %>
-        </p>
-        <p>Nama Pasien: <%= booking.namaPasien %>
-        </p>
-        <p>Nama Dokter: <%= booking.namaDokter %>
-        </p>
+        <h2 class="mb-4">Catat Rekam Medis</h2>
+        
+        <div class="patient-details">
+            <h4>Detail Pasien</h4>
+            <p><strong>Nomor Antrian:</strong> <%= booking.nomorAntrian %></p>
+            <p><strong>Nama Pasien:</strong> <%= booking.namaPasien %></p>
+            <p><strong>Nama Dokter:</strong> <%= booking.namaDokter %></p>
+        </div>
+
+        <!-- Tampilkan pesan error/success jika ada -->
+        <% if (messages.error) { %>
+            <div class="alert alert-danger"><%= messages.error %></div>
+        <% } %>
+        <% if (messages.success) { %>
+            <div class="alert alert-success"><%= messages.success %></div>
+        <% } %>
 
         <form id="rekamMedisForm" action="/perawat/catat-rekam-medis" method="POST" enctype="multipart/form-data">
             <input type="hidden" name="bookingId" value="<%= booking.idBooking %>">
-            <input type="hidden" name="currentStatus" id="currentStatus" value="">
-            <div class="form-group">
-                <select class="form-control" name="pasienId" id="pasienId" required>
-                    <option value="" disabled selected>Pilih Pasien</option>
-                    <% patients.forEach(patient=> { %>
-                        <option value="<%= patient.idUser %>">
-                            <%= patient.namaUser %>
-                        </option>
-                        <% }); %>
-                </select>
-            </div>
+            <input type="hidden" name="pasienId" value="<%= booking.pasienId %>">
+            <input type="hidden" name="currentStatus" value="selesai">
+
             <div class="form-group">
                 <label for="tekananDarah">Tekanan Darah</label>
                 <input type="text" class="form-control" name="tekananDarah" id="tekananDarah"
                     placeholder="Contoh: 120/80" required>
             </div>
+
             <div class="form-group">
                 <label for="tinggiBadan">Tinggi Badan (cm)</label>
-                <input type="number" class="form-control" name="tinggiBadan" id="tinggiBadan" required>
+                <input type="number" class="form-control" name="tinggiBadan" id="tinggiBadan" 
+                    min="0" max="300" required>
             </div>
+
             <div class="form-group">
                 <label for="beratBadan">Berat Badan (kg)</label>
-                <input type="number" class="form-control" name="beratBadan" id="beratBadan" required>
+                <input type="number" class="form-control" name="beratBadan" id="beratBadan"
+                    min="0" max="500" required>
             </div>
+
             <div class="form-group">
                 <label for="suhuBadan">Suhu Badan (°C)</label>
-                <input type="number" step="0.1" class="form-control" name="suhuBadan" id="suhuBadan" required>
+                <input type="number" step="0.1" class="form-control" name="suhuBadan" id="suhuBadan"
+                    min="35" max="45" required>
             </div>
+
             <div class="form-group">
                 <label for="keluhanPasien">Keluhan Pasien</label>
-                <textarea class="form-control" name="keluhanPasien" id="keluhanPasien" rows="3" required></textarea>
+                <textarea class="form-control" name="keluhanPasien" id="keluhanPasien" 
+                    rows="3" required></textarea>
             </div>
+
             <div class="form-group">
                 <label for="dokumenMedis">Upload Dokumen Medis (Opsional)</label>
-                <input type="file" class="form-control-file" name="dokumenMedis" id="dokumenMedis"
-                    accept=".pdf,.jpg,.png">
+                <input type="file" class="form-control" name="dokumenMedis" id="dokumenMedis"
+                    accept=".pdf,.jpg,.jpeg,.png">
             </div>
 
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                data-bs-target="#confirmationModal">Simpan Rekam Medis</button>
-            <div class="back-button-container">
-                <a href="/perawat/halaman-perawat" class="back-button">← Back to Halaman Perawat</a>
-            </div>
+            <button type="submit" class="btn btn-primary">Simpan Rekam Medis</button>
+            <a href="/perawat/halaman-perawat" class="btn btn-secondary">Kembali</a>
         </form>
+    </div>
 
-        <!-- Modal Konfirmasi -->
-        <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel"
-            aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="confirmationModalLabel">Konfirmasi Simpan Rekam Medis</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p>Apakah Anda yakin ingin menyimpan rekam medis ini?</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                        <button type="button" class="btn btn-primary" id="confirmSubmitButton">Konfirmasi</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('rekamMedisForm');
+            
+            form.addEventListener('submit', function (e) {
+                // Validasi tekanan darah
+                const tekananDarah = document.getElementById('tekananDarah').value;
+                const tekananDarahRegex = /^\d{2,3}\/\d{2,3}$/;
 
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                // Optional: Add client-side validation
-                const form = document.querySelector('form');
-                form.addEventListener('submit', function (e) {
-                    const tekananDarah = document.getElementById('tekananDarah').value;
-                    const tekananDarahRegex = /^\d{2,3}\/\d{2,3}$/;
+                if (!tekananDarahRegex.test(tekananDarah)) {
+                    e.preventDefault();
+                    alert('Format tekanan darah salah. Gunakan format: misalnya 120/80');
+                    return;
+                }
 
-                    if (!tekananDarahRegex.test(tekananDarah)) {
-                        e.preventDefault();
-                        alert('Format tekanan darah salah. Gunakan format: misalnya 120/80');
-                    }
-                });
-            });
-            document.addEventListener('DOMContentLoaded', function () {
-                const form = document.querySelector('form');
-                const submitButton = document.getElementById('submitRekamMedis');
-
-                form.addEventListener('submit', function (event) {
-                    event.preventDefault(); // Mencegah submit form langsung
-
-                    // Lakukan validasi form di sini jika diperlukan
-                    const isValid = validateForm();
-
-                    if (isValid) {
-                        // Kirim data form menggunakan AJAX
-                        const formData = new FormData(form);
-
-                        fetch(form.action, {
-                            method: 'POST',
-                            body: formData
-                        })
-                            .then(response => {
-                                if (response.ok) {
-                                    // Tampilkan modal sukses
-                                    $('#successModal').modal('show');
-
-                                    // Reset form setelah sukses (opsional)
-                                    form.reset();
-                                } else {
-                                    // Tangani error
-                                    throw new Error('Gagal menyimpan data');
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Error:', error);
-                                alert('Terjadi kesalahan saat menyimpan data');
-                            });
-                    }
-                });
-
-                // Fungsi validasi form (contoh sederhana)
-                function validateForm() {
-                    const requiredFields = form.querySelectorAll('[required]');
-                    let isValid = true;
-
-                    requiredFields.forEach(field => {
-                        if (!field.value.trim()) {
-                            isValid = false;
-                            field.classList.add('is-invalid');
-                        } else {
-                            field.classList.remove('is-invalid');
-                        }
-                    });
-
-                    return isValid;
+                // Konfirmasi sebelum submit
+                if (!confirm('Apakah Anda yakin ingin menyimpan rekam medis ini?')) {
+                    e.preventDefault();
                 }
             });
-
-            document.addEventListener('DOMContentLoaded', function () {
-                const confirmButton = document.getElementById('confirmSubmitButton');
-                const form = document.getElementById('rekamMedisForm');
-                const currentStatusInput = document.getElementById('currentStatus');
-
-                confirmButton.addEventListener('click', function () {
-                    // Set currentStatus ke 'selesai' sebelum submit
-                    currentStatusInput.value = 'selesai'; // Mengubah status menjadi 'selesai'
-                    // Submit form
-                    form.submit(); // Mengirimkan form ke server
-                });
-            });
-        </script>
+        });
+    </script>
 </body>
 
 </html>
