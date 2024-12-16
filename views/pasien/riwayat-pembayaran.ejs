@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Riwayat Pembayaran</title>
+    <link rel="stylesheet" href="/css/riwayat-pembayaran.css">
+</head>
+<body>
+    <header>
+        <h1>Riwayat Pembayaran</h1>
+    </header>
+    <div class="payment-history-container">
+        <h2>Histori Pembayaran</h2>
+        <% if (transactions && transactions.length > 0) { %>
+            <table class="payment-history-table">
+                <thead>
+                    <tr>
+                        <th>No Transaksi</th>
+                        <th>Tanggal</th>
+                        <th>Dokter</th>
+                        <th>Total Biaya</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% transactions.forEach(function(transaksi) { %>
+                        <tr>
+                            <td>#<%= transaksi.id.toString().padStart(5, '0') %></td>
+                            <td><%= new Date(transaksi.tanggal).toLocaleDateString('id-ID', {
+                                day: 'numeric',
+                                month: 'long',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            }) %></td>
+                            <td><%= transaksi.namaDokter || 'Tidak tersedia' %></td>
+                            <td>Rp <%= parseFloat(transaksi.totalBiaya).toLocaleString('id-ID', {
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: 0
+                            }) %></td>
+                            <td>
+                                <span class="status-<%= transaksi.status.toLowerCase() %>">
+                                    <%= transaksi.status %>
+                                </span>
+                            </td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        <% } else { %>
+            <div class="no-transactions">
+                <p>Tidak ada riwayat transaksi pembayaran.</p>
+            </div>
+        <% } %>
+    </div>
+</body>
+</html>

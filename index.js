@@ -386,7 +386,62 @@ app.get('/pasien/riwayat-medis', isAuthenticated, (req, res) => {
   );
 });
 
+app.get('/pasien/riwayat-pembayaran', isAuthenticated, (req, res) => {
+  const userId = req.session.user.idUser;
 
+  // Log the user ID for debugging
+  console.log('Attempting to fetch transactions for user ID:', userId);
+
+  const query = `
+    SELECT 
+      t.id,
+      t.tanggal,
+      d.namaUser as namaDokter,
+      t.totalBiaya,
+      t.status
+    FROM transaksi t
+    LEFT JOIN user d ON t.dokterId = d.idUser
+    WHERE t.pasienId = ?
+    ORDER BY t.tanggal DESC
+  `;
+
+  // First, verify the connection
+  if (!pool) {
+    console.error('Database connection pool is not initialized');
+    return res.render('error', {
+      message: 'Terjadi kesalahan koneksi database',
+      error: { status: 500, stack: '' }
+    });
+  }
+
+  pool.query(query, [userId], (err, results) => {
+    if (err) {
+      // Log the detailed error
+      console.error('Database error:', err);
+      return res.render('error', {
+        message: 'Terjadi kesalahan saat mengambil data riwayat pembayaran',
+        error: { status: 500, stack: process.env.NODE_ENV === 'development' ? err.stack : '' }
+      });
+    }
+
+    // Log the results for debugging
+    console.log('Query results:', results);
+
+    // Check if results exist
+    if (!results) {
+      console.log('No results returned from query');
+      return res.render('pasien/riwayat-pembayaran', {
+        user: req.session.user,
+        transactions: []
+      });
+    }
+
+    res.render('pasien/riwayat-pembayaran', {
+      user: req.session.user,
+      transactions: results
+    });
+  });
+});
 
 //-------------------------------------------------------------------------------------------------
 // Admin Routes
