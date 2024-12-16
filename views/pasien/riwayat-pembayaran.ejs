@@ -11,12 +11,11 @@
         <h1>Riwayat Pembayaran</h1>
     </header>
     <div class="payment-history-container">
-        <h2>Histori Pembayaran</h2>
+        <h2>Riwayat Pembayaran</h2>
         <% if (transactions && transactions.length > 0) { %>
             <table class="payment-history-table">
                 <thead>
                     <tr>
-                        <th>No Transaksi</th>
                         <th>Tanggal</th>
                         <th>Dokter</th>
                         <th>Total Biaya</th>
@@ -26,13 +25,10 @@
                 <tbody>
                     <% transactions.forEach(function(transaksi) { %>
                         <tr>
-                            <td>#<%= transaksi.id.toString().padStart(5, '0') %></td>
                             <td><%= new Date(transaksi.tanggal).toLocaleDateString('id-ID', {
                                 day: 'numeric',
                                 month: 'long',
-                                year: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
+                                year: 'numeric'
                             }) %></td>
                             <td><%= transaksi.namaDokter || 'Tidak tersedia' %></td>
                             <td>Rp <%= parseFloat(transaksi.totalBiaya).toLocaleString('id-ID', {
@@ -53,6 +49,9 @@
                 <p>Tidak ada riwayat transaksi pembayaran.</p>
             </div>
         <% } %>
+        <div class="back-button-container">
+            <a href="/halaman-pasien" class="back-button">← Back to Halaman Pasien</a>
+        </div>
     </div>
 </body>
 </html>
