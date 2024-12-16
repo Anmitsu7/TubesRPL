@@ -110,7 +110,8 @@ CREATE TABLE `riwayat_medis` (
   `tinggi_badan` decimal(5,2) DEFAULT NULL COMMENT 'Tinggi badan dalam sentimeter',
   `berat_badan` decimal(5,2) DEFAULT NULL COMMENT 'Berat badan dalam kilogram',
   `suhu_badan` decimal(4,1) DEFAULT NULL COMMENT 'Suhu badan dalam derajat Celsius',
-  `keluhan_pasien` text DEFAULT NULL COMMENT 'Deskripsi keluhan yang dirasakan pasien'
+  `keluhan_pasien` text DEFAULT NULL COMMENT 'Deskripsi keluhan yang dirasakan pasien',
+  `dokumen_medis` varchar (255) DEFAULT NULL COMMENT 'Path dokumen medis yang diupload'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
