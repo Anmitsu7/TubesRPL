@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 15, 2024 at 03:37 PM
+-- Generation Time: Dec 16, 2024 at 08:17 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -45,7 +45,7 @@ CREATE TABLE `booking` (
 
 INSERT INTO `booking` (`idBooking`, `pasienId`, `jadwalId`, `tanggalBooking`, `metodePendaftaran`, `status`, `nomorAntrian`, `statusAntrian`, `statusPembayaran`) VALUES
 (1, 4, 2, '2024-12-04 23:00:34', 'offline', 'aktif', NULL, 'menunggu', 'belum_bayar'),
-(2, 4, 2, '2024-12-04 23:00:42', 'online', 'aktif', '1', 'menunggu', 'belum_bayar'),
+(2, 4, 2, '2024-12-04 23:00:42', 'online', 'aktif', '1', 'selesai', 'belum_bayar'),
 (4, 15, 15, '2024-12-11 14:45:15', 'offline', 'aktif', '3', 'menunggu', 'belum_bayar'),
 (5, 4, 15, '2024-12-11 14:47:51', 'offline', 'aktif', '4', 'menunggu', 'belum_bayar');
 
@@ -111,16 +111,17 @@ CREATE TABLE `riwayat_medis` (
   `berat_badan` decimal(5,2) DEFAULT NULL COMMENT 'Berat badan dalam kilogram',
   `suhu_badan` decimal(4,1) DEFAULT NULL COMMENT 'Suhu badan dalam derajat Celsius',
   `keluhan_pasien` text DEFAULT NULL COMMENT 'Deskripsi keluhan yang dirasakan pasien',
-  `dokumen_medis` varchar (255) DEFAULT NULL COMMENT 'Path dokumen medis yang diupload'
+  `dokumen_medis` varchar(255) DEFAULT NULL COMMENT 'Path dokumen medis yang diupload'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `riwayat_medis`
 --
 
-INSERT INTO `riwayat_medis` (`idRiwayatMedis`, `idPasien`, `tanggal`, `diagnosa`, `resep`, `catatan`, `tekanan_darah`, `tinggi_badan`, `berat_badan`, `suhu_badan`, `keluhan_pasien`) VALUES
-(1, 3, '2024-01-15 10:30:00', 'Flu Ringan', 'Paracetamol, Vitamin C', 'Istirahat yang cukup', NULL, NULL, NULL, NULL, NULL),
-(2, 3, '2024-02-20 14:45:00', 'Demam', 'Antibiotik, Obat Penurun Panas', 'Kontrol ulang dalam 3 hari', NULL, NULL, NULL, NULL, NULL);
+INSERT INTO `riwayat_medis` (`idRiwayatMedis`, `idPasien`, `tanggal`, `diagnosa`, `resep`, `catatan`, `tekanan_darah`, `tinggi_badan`, `berat_badan`, `suhu_badan`, `keluhan_pasien`, `dokumen_medis`) VALUES
+(1, 3, '2024-01-15 10:30:00', 'Flu Ringan', 'Paracetamol, Vitamin C', 'Istirahat yang cukup', NULL, NULL, NULL, NULL, NULL, NULL),
+(2, 3, '2024-02-20 14:45:00', 'Demam', 'Antibiotik, Obat Penurun Panas', 'Kontrol ulang dalam 3 hari', NULL, NULL, NULL, NULL, NULL, NULL),
+(3, 4, '2024-12-16 10:55:38', '1', '1', '1', '1', 1.00, 1.00, 1.0, '1', NULL);
 
 -- --------------------------------------------------------
 
@@ -142,10 +143,17 @@ INSERT INTO `sessions` (`session_id`, `expires`, `data`) VALUES
 ('4EX76OzFzzxp9LupRhRMq-fWL0mF1swn', 1734359030, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-16T14:23:49.935Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{}}'),
 ('4VIfOvnhh_L3cBO56IJHeI7ohQHlqiMU', 1734359029, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-16T14:23:48.950Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{\"error\":[\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\"]},\"user\":{\"idUser\":5,\"namaUser\":\"admin\",\"email\":\"admin@gmail.com\",\"role\":\"admin\"}}'),
 ('HW-D1MxY7JVPCHqem66m3NRfNHeBwDNb', 1734359030, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-16T14:23:49.930Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{\"error\":[\"Silakan login terlebih dahulu\"]}}'),
+('N1Icf7C-00XwIXKx1JEDTh93O_jxEGD1', 1734416138, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-17T06:15:30.199Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{},\"user\":{\"idUser\":18,\"namaUser\":\"arsava\",\"email\":\"putusava@gmail.com\",\"role\":\"pasien\"}}'),
+('TyOG8jUTcvLtUFOYFD9UjgHjLfzJN_98', 1734409052, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-17T04:17:12.370Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{},\"user\":{\"idUser\":5,\"namaUser\":\"admin\",\"email\":\"admin@gmail.com\",\"role\":\"admin\"}}'),
 ('UQVVgiZxkwgldW228GoZeOWr69Zax5C_', 1734359319, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-16T14:28:16.399Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{},\"user\":{\"idUser\":5,\"namaUser\":\"admin\",\"email\":\"admin@gmail.com\",\"role\":\"admin\"}}'),
+('WbbtaM5uV2jXiELI1wWUUDq-nyKvTRtZ', 1734407819, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-17T03:56:52.049Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{},\"user\":{\"idUser\":5,\"namaUser\":\"admin\",\"email\":\"admin@gmail.com\",\"role\":\"admin\"}}'),
+('XI_43QhDPTAXyCTsVtB4Fsma9CUhjtFa', 1734409248, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-17T04:20:47.926Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{}}'),
 ('b27GEqpilvSrS3D1VCS1kqx9k4CLJ88c', 1734010286, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-12T13:30:00.875Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{},\"user\":{\"idUser\":5,\"namaUser\":\"admin\",\"email\":\"admin@gmail.com\",\"role\":\"admin\"}}'),
 ('jIlevX-oRouLBwbdH2TyK_6fXkFSK0M-', 1734006909, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-12T12:35:07.269Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{},\"user\":{\"idUser\":5,\"namaUser\":\"admin\",\"email\":\"admin@gmail.com\",\"role\":\"admin\"}}'),
-('mmoW0TgGwLBkp3mDrL6FHi04IAKk2a9N', 1734358870, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-16T14:21:10.064Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{\"error\":[\"Terjadi kesalahan saat memuat data transaksi\"]},\"user\":{\"idUser\":5,\"namaUser\":\"admin\",\"email\":\"admin@gmail.com\",\"role\":\"admin\"}}');
+('lt7NG6ucFiDsutibepXtbO8FVx38t88K', 1734409172, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-17T04:19:32.290Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{}}'),
+('mmoW0TgGwLBkp3mDrL6FHi04IAKk2a9N', 1734358870, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-16T14:21:10.064Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{\"error\":[\"Terjadi kesalahan saat memuat data transaksi\"]},\"user\":{\"idUser\":5,\"namaUser\":\"admin\",\"email\":\"admin@gmail.com\",\"role\":\"admin\"}}'),
+('u6DN_pct9dmd1byvlK5djGZWPkrrhqK0', 1734416303, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-17T06:18:22.866Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{}}'),
+('wBdp6Ciu-zZptQG4lk3r-0BuqAMnKoNF', 1734415689, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-17T06:07:45.378Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{},\"user\":{\"idUser\":18,\"namaUser\":\"arsava\",\"email\":\"putusava@gmail.com\",\"role\":\"pasien\"}}');
 
 -- --------------------------------------------------------
 
@@ -185,7 +193,7 @@ CREATE TABLE `user` (
 --
 
 INSERT INTO `user` (`idUser`, `namaUser`, `email`, `password`, `tanggalLahir`, `alamat`, `nomorTelepon`, `role`, `biayaKonsultasi`) VALUES
-(1, 'Dr. John Doe', 'john.doe@klinik.com', '$2a$10$XYZ123', '1980-01-15', 'Jl. Dokter No. 10', '081234567890', 'dokter', 75000.00),
+(1, 'Dr. John Doe', 'john.doe@klinik.com', '123456', '1980-01-15', 'Jl. Dokter No. 10', '081234567890', 'dokter', 75000.00),
 (2, 'Dr. Jane Smith', 'jane.smith@klinik.com', '$2a$10$ABC456', '1975-05-20', 'Jl. Dokter No. 20', '082345678901', 'dokter', 70000.00),
 (3, 'Patient User', 'patient@example.com', '$2a$10$DEF789', '1990-10-10', 'Jl. Pasien No. 30', '083456789012', 'pasien', 0.00),
 (4, 'kensi', 'kensi@gmail.com', '$2a$10$op/82W3unuGPlwfG80K8UOWqiEYosXO7drWft.umiXZdXvxmQUiaC', '2003-04-30', 'pasko', '0822', 'pasien', 0.00),
@@ -197,7 +205,8 @@ INSERT INTO `user` (`idUser`, `namaUser`, `email`, `password`, `tanggalLahir`, `
 (12, 'Dr. Michael Chen', 'michael.chen@klinik.com', '$2a$10$ABC101', '1982-07-12', 'Jl. Anggrek No. 8', '081234567892', 'dokter', 80000.00),
 (13, 'Dr. Amanda Lopez', 'amanda.lopez@klinik.com', '$2a$10$DEF102', '1988-11-30', 'Jl. Mawar No. 22', '081234567893', 'dokter', 60000.00),
 (14, 'Dr. David Kim', 'david.kim@klinik.com', '$2a$10$GHI103', '1979-09-05', 'Jl. Dahlia No. 45', '081234567894', 'dokter', 55000.00),
-(15, 'sava', 'sava@gmail.com', '$2a$10$0aSq6OWUMoxXpmonkRSBseff5UEaTze8XvsST.Vyonfz1da/EW.6e', '2012-12-12', 'koper', '0822', 'pasien', 0.00);
+(15, 'sava', 'sava@gmail.com', '$2a$10$0aSq6OWUMoxXpmonkRSBseff5UEaTze8XvsST.Vyonfz1da/EW.6e', '2012-12-12', 'koper', '0822', 'pasien', 0.00),
+(18, 'arsava', 'putusava@gmail.com', '$2a$10$adeoTMGtgWinmwHb508Kq.o9q5HLvyIe8ryma2KxlTMHehP3ue3we', '2003-03-01', 'koper', '1234', 'pasien', 0.00);
 
 --
 -- Indexes for dumped tables
@@ -266,7 +275,7 @@ ALTER TABLE `jadwal_dokter`
 -- AUTO_INCREMENT for table `riwayat_medis`
 --
 ALTER TABLE `riwayat_medis`
-  MODIFY `idRiwayatMedis` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `idRiwayatMedis` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `transaksi`
@@ -278,7 +287,7 @@ ALTER TABLE `transaksi`
 -- AUTO_INCREMENT for table `user`
 --
 ALTER TABLE `user`
-  MODIFY `idUser` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `idUser` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- Constraints for dumped tables
