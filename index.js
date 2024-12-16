@@ -396,11 +396,11 @@ app.get('/pasien/riwayat-pembayaran', isAuthenticated, (req, res) => {
     SELECT 
       t.id,
       t.tanggal,
-      d.namaLengkap as namaDokter,
+      d.namaUser as namaDokter,
       t.totalBiaya,
       t.status
     FROM transaksi t
-    LEFT JOIN dokter d ON t.dokterId = d.id
+    LEFT JOIN user d ON t.dokterId = d.idUser
     WHERE t.pasienId = ?
     ORDER BY t.tanggal DESC
   `;
