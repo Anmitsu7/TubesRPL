@@ -110,15 +110,31 @@
         }
 
         .table th {
-            background-color: #007bff;
-            color: white;
-            font-weight: bold;
+            background-color: #007bff !important;
+            color: white !important;
             text-align: center;
+            border: none !important;
+            padding: 12px !important;
         }
 
         .table td {
-            text-align: center;
-            vertical-align: middle;
+            padding: 12px !important;
+            border: none !important;
+            border-bottom: 1px solid #dee2e6 !important;
+        }
+
+        .table tr:last-child td {
+            border-bottom: none !important;
+        }
+
+        .table-striped tbody tr:nth-of-type(odd) {
+            background-color: rgba(0,0,0,.02);
+        }
+
+        .badge {
+            font-weight: 500;
+            padding: 8px 12px;
+            border-radius: 4px;
         }
 
         .table-hover tbody tr:hover {
@@ -134,8 +150,25 @@
             transition: background-color 0.3s ease;
         }
 
+        .btn-input-diagnosa {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .btn-input-diagnosa:hover {
+            background-color: #0056b3;
+        }
+
         .btn-primary:hover {
             background-color: #0056b3;
+        }
+
+        .text-danger {
+            color: #dc3545 !important;
         }
 
         .btn-sm {
@@ -181,16 +214,11 @@
             }
         }
         /* Profile Styling */
-.profile {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: #f1f8ff;
-    padding: 5px 10px;
-    border-radius: 50px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-}
+        .profile {
+            background: transparent;
+            box-shadow: none;
+            padding: 0;
+        }
 
 .profile img {
     width: 40px;
@@ -201,8 +229,8 @@
 }
 
 .profile span {
-    font-weight: 500;
     color: #333;
+    font-weight: 400;
 }
 
 .profile:hover {
@@ -214,26 +242,21 @@
 </head>
 
 <body>
-    <!-- Navbar -->
-    <header>
-        <h1>Klinik SehatCare</h1>
+    <header style="padding: 15px 30px;">
+        <a href="#" style="text-decoration: none;">
+            <h1 style="font-size: 24px; margin: 0;">Klinik SehatCare</h1>
+        </a>
         <nav>
             <a href="/lihat-data-pasien">Lihat Data Pasien</a>
-            <a class="text-danger" href="/logout">Logout</a>
-            <!-- User Profile Section -->
-            <div class="profile">
-                
-                <span><%= user.namaUser %></span>
-            </div>
+            <a href="/logout" style="color: #dc3545;">Logout</a>
+            <span style="color: #333;">Dr. <%= user.namaUser %></span>
         </nav>
     </header>
-    
 
-    <!-- Container -->
     <div class="container">
         <!-- Jadwal Praktek -->
-        <h3>Jadwal Praktek</h3>
-        <table class="table table-bordered table-hover">
+        <h3 style="font-size: 20px; color: #333;">Jadwal Praktek</h3>
+        <table class="table">
             <thead>
                 <tr>
                     <th>Hari</th>
@@ -243,18 +266,18 @@
             </thead>
             <tbody>
                 <% jadwal.forEach(item => { %>
-                    <tr>
-                        <td><%= item.hari %></td>
-                        <td><%= item.jamMulai %></td>
-                        <td><%= item.jamSelesai %></td>
-                    </tr>
+                <tr>
+                    <td style="text-align: center;"><%= item.hari %></td>
+                    <td style="text-align: center;"><%= item.jamMulai %></td>
+                    <td style="text-align: center;"><%= item.jamSelesai %></td>
+                </tr>
                 <% }) %>
             </tbody>
         </table>
 
-        <!-- Daftar Pasien Hari Ini -->
-        <h3>Daftar Pasien Hari Ini</h3>
-        <table class="table table-striped">
+        <!-- Daftar Pasien -->
+        <h3 style="font-size: 20px; color: #333; margin-top: 30px;">Daftar Pasien Menunggu Pemeriksaan</h3>
+        <table class="table">
             <thead>
                 <tr>
                     <th>No. Antrian</th>
@@ -262,30 +285,67 @@
                     <th>Nomor Telepon</th>
                     <th>Tanggal Booking</th>
                     <th>Metode Pendaftaran</th>
-                    <th>Diagnosa</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
                 </tr>
             </thead>
             <tbody>
                 <% if (daftarPasien.length > 0) { %>
                     <% daftarPasien.forEach(pasien => { %>
-                        <tr>
-                            <td><%= pasien.nomorAntrian || '-' %></td>
-                            <td><%= pasien.pasien %></td>
-                            <td><%= pasien.nomorTelepon %></td>
-                            <td><%= pasien.tanggalBooking %></td>
-                            <td><%= pasien.metodePendaftaran %></td>
-                            <td>
-                                <% if (pasien.diagnosa) { %>
-                                    <%= pasien.diagnosa %>
-                                <% } else { %>
-                                    <span class="text-muted">Belum ada diagnosa</span>
-                                <% } %>
-                            </td>
-                        </tr>
-                    <% }); %>
+                    <tr>
+                        <td><%= pasien.nomorAntrian %></td>
+                        <td><%= pasien.pasien %></td>
+                        <td><%= pasien.nomorTelepon %></td>
+                        <td><%= pasien.tanggalBooking %></td>
+                        <td><%= pasien.metodePendaftaran %></td>
+                        <td>
+                            <span class="badge" style="background-color: #ffc107; color: #000;">
+                                Menunggu Pemeriksaan
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn-input-diagnosa" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#modalDiagnosa<%= pasien.idBooking %>">
+                                Input Diagnosa
+                            </button>
+
+                            <!-- Modal Diagnosa -->
+                            <div class="modal fade" id="modalDiagnosa<%= pasien.idBooking %>">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header bg-primary text-white">
+                                            <h5 class="modal-title">Input Diagnosa</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <form action="/input-diagnosa" method="POST">
+                                            <div class="modal-body">
+                                                <input type="hidden" name="bookingId" value="<%= pasien.idBooking %>">
+                                                <input type="hidden" name="pasienId" value="<%= pasien.pasienId %>">
+                                                
+                                                <div class="mb-3">
+                                                    <label class="form-label">Diagnosa</label>
+                                                    <textarea class="form-control" name="diagnosa" rows="3" required></textarea>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Resep Obat</label>
+                                                    <textarea class="form-control" name="resep" rows="3" required></textarea>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                                <button type="submit" class="btn btn-primary">Input Diagnosa</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <% }) %>
                 <% } else { %>
                     <tr>
-                        <td colspan="6" class="text-center">Tidak ada pasien terjadwal hari ini</td>
+                        <td colspan="7" class="text-center">Tidak ada pasien yang sedang menunggu pemeriksaan</td>
                     </tr>
                 <% } %>
             </tbody>
@@ -293,7 +353,7 @@
     </div>
 
     <footer>
-        <p>&copy; 2024 Klinik SehatCare. All Rights Reserved.</p>
+        <p>&copy; <%= new Date().getFullYear() %> Klinik SehatCare. All Rights Reserved.</p>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>

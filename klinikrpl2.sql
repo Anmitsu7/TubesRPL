@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 16, 2024 at 08:17 AM
+-- Generation Time: Dec 16, 2024 at 10:03 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -44,10 +44,7 @@ CREATE TABLE `booking` (
 --
 
 INSERT INTO `booking` (`idBooking`, `pasienId`, `jadwalId`, `tanggalBooking`, `metodePendaftaran`, `status`, `nomorAntrian`, `statusAntrian`, `statusPembayaran`) VALUES
-(1, 4, 2, '2024-12-04 23:00:34', 'offline', 'aktif', NULL, 'menunggu', 'belum_bayar'),
-(2, 4, 2, '2024-12-04 23:00:42', 'online', 'aktif', '1', 'selesai', 'belum_bayar'),
-(4, 15, 15, '2024-12-11 14:45:15', 'offline', 'aktif', '3', 'menunggu', 'belum_bayar'),
-(5, 4, 15, '2024-12-11 14:47:51', 'offline', 'aktif', '4', 'menunggu', 'belum_bayar');
+(7, 4, 2, '2024-12-16 15:43:24', 'offline', 'selesai', '1', 'selesai', 'lunas');
 
 -- --------------------------------------------------------
 
@@ -72,7 +69,7 @@ CREATE TABLE `jadwal_dokter` (
 --
 
 INSERT INTO `jadwal_dokter` (`idJadwal`, `dokterId`, `hari`, `jamMulai`, `jamSelesai`, `kuotaOnline`, `kuotaOffline`, `sisaKuotaOnline`, `sisaKuotaOffline`) VALUES
-(2, 1, 'Senin', '08:00:00', '16:00:00', 10, 5, 8, 4),
+(2, 1, 'Senin', '08:00:00', '16:00:00', 10, 5, 8, 3),
 (3, 1, 'Rabu', '09:00:00', '17:00:00', 8, 7, 8, 6),
 (4, 1, 'Jumat', '10:00:00', '18:00:00', 12, 6, 12, 6),
 (5, 2, 'Selasa', '08:30:00', '16:30:00', 9, 6, 9, 6),
@@ -84,7 +81,7 @@ INSERT INTO `jadwal_dokter` (`idJadwal`, `dokterId`, `hari`, `jamMulai`, `jamSel
 (11, 11, 'Selasa', '07:00:00', '13:00:00', 10, 7, 10, 7),
 (12, 11, 'Kamis', '14:00:00', '20:00:00', 8, 6, 8, 6),
 (13, 11, 'Sabtu', '09:00:00', '15:00:00', 12, 8, 12, 8),
-(14, 12, 'Senin', '14:00:00', '20:00:00', 10, 8, 10, 8),
+(14, 12, 'Senin', '14:00:00', '20:00:00', 10, 8, 10, 7),
 (15, 12, 'Rabu', '08:00:00', '14:00:00', 8, 6, 8, 4),
 (16, 12, 'Jumat', '13:00:00', '19:00:00', 12, 8, 12, 8),
 (17, 13, 'Selasa', '13:00:00', '19:00:00', 10, 8, 10, 8),
@@ -101,6 +98,7 @@ INSERT INTO `jadwal_dokter` (`idJadwal`, `dokterId`, `hari`, `jamMulai`, `jamSel
 
 CREATE TABLE `riwayat_medis` (
   `idRiwayatMedis` int(11) NOT NULL,
+  `bookingId` int(11) DEFAULT NULL,
   `idPasien` int(11) NOT NULL,
   `tanggal` datetime NOT NULL,
   `diagnosa` text DEFAULT NULL,
@@ -118,10 +116,8 @@ CREATE TABLE `riwayat_medis` (
 -- Dumping data for table `riwayat_medis`
 --
 
-INSERT INTO `riwayat_medis` (`idRiwayatMedis`, `idPasien`, `tanggal`, `diagnosa`, `resep`, `catatan`, `tekanan_darah`, `tinggi_badan`, `berat_badan`, `suhu_badan`, `keluhan_pasien`, `dokumen_medis`) VALUES
-(1, 3, '2024-01-15 10:30:00', 'Flu Ringan', 'Paracetamol, Vitamin C', 'Istirahat yang cukup', NULL, NULL, NULL, NULL, NULL, NULL),
-(2, 3, '2024-02-20 14:45:00', 'Demam', 'Antibiotik, Obat Penurun Panas', 'Kontrol ulang dalam 3 hari', NULL, NULL, NULL, NULL, NULL, NULL),
-(3, 4, '2024-12-16 10:55:38', '1', '1', '1', '1', 1.00, 1.00, 1.0, '1', NULL);
+INSERT INTO `riwayat_medis` (`idRiwayatMedis`, `bookingId`, `idPasien`, `tanggal`, `diagnosa`, `resep`, `catatan`, `tekanan_darah`, `tinggi_badan`, `berat_badan`, `suhu_badan`, `keluhan_pasien`, `dokumen_medis`) VALUES
+(6, 7, 4, '2024-12-16 15:57:59', 'pusing', 'batako', NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -140,18 +136,37 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`session_id`, `expires`, `data`) VALUES
+('0U3OS1c5mT7vGUBqVH_1YUjzmMWvqlfw', 1734423895, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-17T08:24:55.302Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{\"error\":[\"Silakan login terlebih dahulu\"]}}'),
+('1lMOhfgTlgZPHNH3v9bVTY1e0vhdPg5j', 1734424013, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-17T08:26:53.237Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{},\"user\":{\"idUser\":1,\"namaUser\":\"Dr. John Doe\",\"email\":\"john.doe@klinik.com\",\"role\":\"dokter\"}}'),
 ('4EX76OzFzzxp9LupRhRMq-fWL0mF1swn', 1734359030, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-16T14:23:49.935Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{}}'),
 ('4VIfOvnhh_L3cBO56IJHeI7ohQHlqiMU', 1734359029, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-16T14:23:48.950Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{\"error\":[\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\",\"Terjadi kesalahan saat memuat data transaksi\"]},\"user\":{\"idUser\":5,\"namaUser\":\"admin\",\"email\":\"admin@gmail.com\",\"role\":\"admin\"}}'),
+('9nkHlf_Xq313n-QA0soxNpI0ndy-rV6f', 1734424519, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-17T08:35:09.771Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{},\"user\":{\"idUser\":1,\"namaUser\":\"Dr. John Doe\",\"email\":\"john.doe@klinik.com\",\"role\":\"dokter\"}}'),
 ('HW-D1MxY7JVPCHqem66m3NRfNHeBwDNb', 1734359030, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-16T14:23:49.930Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{\"error\":[\"Silakan login terlebih dahulu\"]}}'),
+('IzqLh3-s-3W6YbyIYguTSGAAHc8bm6sd', 1734423935, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-17T08:25:35.202Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{\"error\":[\"Gagal memuat jadwal\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\"]},\"user\":{\"idUser\":1,\"namaUser\":\"Dr. John Doe\",\"email\":\"john.doe@klinik.com\",\"role\":\"dokter\"}}'),
 ('N1Icf7C-00XwIXKx1JEDTh93O_jxEGD1', 1734416138, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-17T06:15:30.199Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{},\"user\":{\"idUser\":18,\"namaUser\":\"arsava\",\"email\":\"putusava@gmail.com\",\"role\":\"pasien\"}}'),
+('Oyq3nyjYPl4InrwTFPbfFMSJl0y4YFvQ', 1734423912, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-17T08:25:12.140Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{}}'),
+('PTrQsl_e72gDyKX37NIq_E1o4NqYRvSl', 1734424737, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-17T08:36:14.557Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{},\"user\":{\"idUser\":1,\"namaUser\":\"Dr. John Doe\",\"email\":\"john.doe@klinik.com\",\"role\":\"dokter\"}}'),
+('RFhdxaBDtej5RwiW59J3TkMnehDGpu78', 1734423894, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-17T08:24:54.340Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{\"error\":[\"Gagal memuat jadwal\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\"]},\"user\":{\"idUser\":1,\"namaUser\":\"Dr. John Doe\",\"email\":\"john.doe@klinik.com\",\"role\":\"dokter\"}}'),
 ('TyOG8jUTcvLtUFOYFD9UjgHjLfzJN_98', 1734409052, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-17T04:17:12.370Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{},\"user\":{\"idUser\":5,\"namaUser\":\"admin\",\"email\":\"admin@gmail.com\",\"role\":\"admin\"}}'),
 ('UQVVgiZxkwgldW228GoZeOWr69Zax5C_', 1734359319, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-16T14:28:16.399Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{},\"user\":{\"idUser\":5,\"namaUser\":\"admin\",\"email\":\"admin@gmail.com\",\"role\":\"admin\"}}'),
 ('WbbtaM5uV2jXiELI1wWUUDq-nyKvTRtZ', 1734407819, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-17T03:56:52.049Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{},\"user\":{\"idUser\":5,\"namaUser\":\"admin\",\"email\":\"admin@gmail.com\",\"role\":\"admin\"}}'),
 ('XI_43QhDPTAXyCTsVtB4Fsma9CUhjtFa', 1734409248, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-17T04:20:47.926Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{}}'),
-('b27GEqpilvSrS3D1VCS1kqx9k4CLJ88c', 1734010286, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-12T13:30:00.875Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{},\"user\":{\"idUser\":5,\"namaUser\":\"admin\",\"email\":\"admin@gmail.com\",\"role\":\"admin\"}}'),
-('jIlevX-oRouLBwbdH2TyK_6fXkFSK0M-', 1734006909, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-12T12:35:07.269Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{},\"user\":{\"idUser\":5,\"namaUser\":\"admin\",\"email\":\"admin@gmail.com\",\"role\":\"admin\"}}'),
+('ZhBoZhkCWnlyUJNDRFcFf5mKqljWO1jP', 1734425635, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-17T08:53:50.469Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{},\"user\":{\"idUser\":1,\"namaUser\":\"Dr. John Doe\",\"email\":\"john.doe@klinik.com\",\"role\":\"dokter\"}}'),
+('_H8KIXdoSkz4ISfUMzBbqH6e6O46RCdS', 1734426151, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-17T09:02:30.941Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{},\"user\":{\"idUser\":5,\"namaUser\":\"admin\",\"email\":\"admin@gmail.com\",\"role\":\"admin\"}}'),
+('btNGx1xhEjcWoMe1BkSPW4uzSEyeXSZw', 1734423883, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-17T08:24:43.342Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{\"error\":[\"Gagal memuat jadwal\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\"]},\"user\":{\"idUser\":1,\"namaUser\":\"Dr. John Doe\",\"email\":\"john.doe@klinik.com\",\"role\":\"dokter\"}}'),
+('cCwDajwc6XG6LOQIU0tKcGj0jrBAdK1Y', 1734425101, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-17T08:44:07.294Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{},\"user\":{\"idUser\":1,\"namaUser\":\"Dr. John Doe\",\"email\":\"john.doe@klinik.com\",\"role\":\"dokter\"}}'),
+('g4-uBoPzxliqlkTzhg9j9coXQcrF3pV1', 1734424286, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-17T08:31:04.986Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{},\"user\":{\"idUser\":1,\"namaUser\":\"Dr. John Doe\",\"email\":\"john.doe@klinik.com\",\"role\":\"dokter\"}}'),
+('g_KmUF-PhudPAOF0CD-JvvKPYQ9P8RwY', 1734423884, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-17T08:24:44.123Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{\"error\":[\"Silakan login terlebih dahulu\"]}}'),
+('ge2fN-QXuGNVeNeqQtGh2cT27kldtW5X', 1734426032, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-17T09:00:31.850Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{},\"user\":{\"idUser\":5,\"namaUser\":\"admin\",\"email\":\"admin@gmail.com\",\"role\":\"admin\"}}'),
+('hCgk-lYKTw2jCZ2p4ghExpyWy6Q18AyZ', 1734423909, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-17T08:25:08.520Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{\"error\":[\"Gagal memuat jadwal\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\",\"Terjadi kesalahan saat memuat halaman\"]},\"user\":{\"idUser\":1,\"namaUser\":\"Dr. John Doe\",\"email\":\"john.doe@klinik.com\",\"role\":\"dokter\"}}'),
+('jtXGTkubOdAWqNmtEN3DztgZrABYEkyd', 1734423785, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-17T08:23:02.663Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{\"error\":[\"Gagal memuat jadwal\"]},\"user\":{\"idUser\":1,\"namaUser\":\"Dr. John Doe\",\"email\":\"john.doe@klinik.com\",\"role\":\"dokter\"}}'),
+('kw7FeUbDjBpS4Dp88LpbIzUp2laqasEX', 1734424208, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-17T08:30:08.226Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{},\"user\":{\"idUser\":1,\"namaUser\":\"Dr. John Doe\",\"email\":\"john.doe@klinik.com\",\"role\":\"dokter\"}}'),
 ('lt7NG6ucFiDsutibepXtbO8FVx38t88K', 1734409172, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-17T04:19:32.290Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{}}'),
 ('mmoW0TgGwLBkp3mDrL6FHi04IAKk2a9N', 1734358870, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-16T14:21:10.064Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{\"error\":[\"Terjadi kesalahan saat memuat data transaksi\"]},\"user\":{\"idUser\":5,\"namaUser\":\"admin\",\"email\":\"admin@gmail.com\",\"role\":\"admin\"}}'),
+('rW8ZrkcxwQ6gzVSmtQSDIpgIZakKYqw6', 1734423912, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-17T08:25:12.135Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{\"error\":[\"Silakan login terlebih dahulu\"]}}'),
+('sEudhIKnzuFURcvQjeQlofeIbG4A7O_e', 1734422977, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-17T08:09:37.410Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{\"error\":[\"Gagal menyimpan rekam medis\",\"Gagal menyimpan rekam medis\"]},\"user\":{\"idUser\":10,\"namaUser\":\"perawat\",\"email\":\"perawat@klinik.com\",\"role\":\"perawat\"}}'),
+('snbZi6R3pCpj2_7VxzHFKZs_XnQ3-8xB', 1734423492, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-17T08:17:09.544Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{},\"user\":{\"idUser\":1,\"namaUser\":\"Dr. John Doe\",\"email\":\"john.doe@klinik.com\",\"role\":\"dokter\"}}'),
+('tVn5F4pk_jv8aZed3ddJMBzEkDjx7Ey6', 1734423895, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-17T08:24:55.306Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{}}'),
 ('u6DN_pct9dmd1byvlK5djGZWPkrrhqK0', 1734416303, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-17T06:18:22.866Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{}}'),
 ('wBdp6Ciu-zZptQG4lk3r-0BuqAMnKoNF', 1734415689, '{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-12-17T06:07:45.378Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"strict\"},\"flash\":{},\"user\":{\"idUser\":18,\"namaUser\":\"arsava\",\"email\":\"putusava@gmail.com\",\"role\":\"pasien\"}}');
 
@@ -169,6 +184,13 @@ CREATE TABLE `transaksi` (
   `totalBiaya` decimal(10,2) NOT NULL,
   `status` varchar(50) DEFAULT 'Pending'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `transaksi`
+--
+
+INSERT INTO `transaksi` (`id`, `pasienId`, `dokterId`, `tanggal`, `totalBiaya`, `status`) VALUES
+(1, 4, 1, '2024-12-16 09:02:30', 75000.00, 'Lunas');
 
 -- --------------------------------------------------------
 
@@ -232,7 +254,8 @@ ALTER TABLE `jadwal_dokter`
 --
 ALTER TABLE `riwayat_medis`
   ADD PRIMARY KEY (`idRiwayatMedis`),
-  ADD KEY `idPasien` (`idPasien`);
+  ADD KEY `idPasien` (`idPasien`),
+  ADD KEY `bookingId` (`bookingId`);
 
 --
 -- Indexes for table `sessions`
@@ -263,7 +286,7 @@ ALTER TABLE `user`
 -- AUTO_INCREMENT for table `booking`
 --
 ALTER TABLE `booking`
-  MODIFY `idBooking` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `idBooking` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `jadwal_dokter`
@@ -275,13 +298,13 @@ ALTER TABLE `jadwal_dokter`
 -- AUTO_INCREMENT for table `riwayat_medis`
 --
 ALTER TABLE `riwayat_medis`
-  MODIFY `idRiwayatMedis` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `idRiwayatMedis` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `transaksi`
 --
 ALTER TABLE `transaksi`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `user`
@@ -310,7 +333,8 @@ ALTER TABLE `jadwal_dokter`
 -- Constraints for table `riwayat_medis`
 --
 ALTER TABLE `riwayat_medis`
-  ADD CONSTRAINT `riwayat_medis_ibfk_1` FOREIGN KEY (`idPasien`) REFERENCES `user` (`idUser`);
+  ADD CONSTRAINT `riwayat_medis_ibfk_1` FOREIGN KEY (`idPasien`) REFERENCES `user` (`idUser`),
+  ADD CONSTRAINT `riwayat_medis_ibfk_2` FOREIGN KEY (`bookingId`) REFERENCES `booking` (`idBooking`);
 
 --
 -- Constraints for table `transaksi`
