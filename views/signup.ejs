@@ -2,408 +2,417 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Daftar - Klinik RPL</title>
-  <link rel="stylesheet" href="/css/auth.css">
-  <style>
-    /* General Reset */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daftar - Klinik RPL</title>
+    <link rel="stylesheet" href="/css/auth.css">
+    <style>
+        /* General Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-body {
-    font-family: 'Poppins', sans-serif;
-    background: linear-gradient(135deg, #e3f2fd, #f1f8ff);
-    color: #333;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-}
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #e3f2fd, #f1f8ff);
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px 0;
+            overflow-y: auto;
+        }
 
-/* Container Styling */
-.auth-container {
-    background: white;
-    border-radius: 15px;
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
-    padding: 30px 40px;
-    width: 100%;
-    max-width: 500px;
-    animation: fadeIn 0.6s ease-in-out;
-}
+        /* Container Styling */
+        .auth-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+            margin: 20px auto;
+            padding: 30px 40px;
+            width: 100%;
+            max-height: none;
+            max-width: 500px;
+            animation: fadeIn 0.6s ease-in-out;
+        }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
 
-h1 {
-    text-align: center;
-    font-size: 2rem;
-    font-weight: 700;
-    color: #007bff;
-    margin-bottom: 20px;
-}
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
 
-/* Form Styling */
-form {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
+        h1 {
+            text-align: center;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #007bff;
+            margin-bottom: 20px;
+        }
 
-label {
-    font-weight: 600;
-    color: #555;
-}
+        /* Form Styling */
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
 
-input {
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-}
+        label {
+            font-weight: 600;
+            color: #555;
+        }
 
-input:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 6px rgba(0, 123, 255, 0.3);
-    outline: none;
-}
+        input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
 
-/* Password Container */
-.password-container {
-    position: relative;
-}
+        input:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 6px rgba(0, 123, 255, 0.3);
+            outline: none;
+        }
 
-.password-container input {
-    width: 100%;
-}
+        /* Password Container */
+        .password-container {
+            position: relative;
+        }
 
-.toggle-password {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    cursor: pointer;
-    font-size: 1.2rem;
-    color: #555;
-    transition: color 0.3s ease;
-}
+        .password-container input {
+            width: 100%;
+        }
 
-.toggle-password:hover {
-    color: #007bff;
-}
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: #555;
+            transition: color 0.3s ease;
+        }
 
-/* Buttons */
-button {
-    background: linear-gradient(to right, #007bff, #0056b3);
-    color: white;
-    border: none;
-    padding: 12px;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
+        .toggle-password:hover {
+            color: #007bff;
+        }
 
-button:hover {
-    background: #0056b3;
-    transform: translateY(-3px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
+        /* Buttons */
+        button {
+            background: linear-gradient(to right, #007bff, #0056b3);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
 
-/* Popup Message */
-.popup {
-    text-align: center;
-    padding: 10px;
-    margin-bottom: 20px;
-    border-radius: 8px;
-    color: white;
-    font-weight: 600;
-}
+        button:hover {
+            background: #0056b3;
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
 
-.popup.error {
-    background-color: #dc3545;
-}
+        /* Popup Message */
+        .popup {
+            text-align: center;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+        }
 
-.popup.success {
-    background-color: #28a745;
-}
+        .popup.error {
+            background-color: #dc3545;
+        }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-    .auth-container {
-        padding: 20px;
-    }
+        .popup.success {
+            background-color: #28a745;
+        }
 
-    h1 {
-        font-size: 1.5rem;
-    }
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .auth-container {
+                margin: 10px;
+                padding: 15px;
+            }
 
-    button {
-        padding: 10px;
-    }
-}
-/* General Reset */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+            h1 {
+                font-size: 1.5rem;
+            }
 
-body {
-    font-family: 'Poppins', sans-serif;
-    background: linear-gradient(to bottom, #0056b3, #007bff, #89c2ff);
-    color: #333;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    margin: 0;
-    background-attachment: fixed;
-    overflow: hidden;
-}
+            button {
+                padding: 10px;
+            }
+        }
 
-/* Container Styling */
-.auth-container {
-    background: rgba(255, 255, 255, 0.95); /* Semi-transparent white */
-    border-radius: 15px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-    padding: 30px 40px;
-    width: 100%;
-    max-width: 500px;
-    animation: fadeIn 0.6s ease-in-out;
-    backdrop-filter: blur(10px);
-}
+        /* General Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(to bottom, #0056b3, #007bff, #89c2ff);
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-attachment: fixed;
+            overflow: hidden;
+        }
 
-h1 {
-    text-align: center;
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: #007bff;
-    margin-bottom: 20px;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
+        /* Container Styling */
+        .auth-container {
+            background: rgba(255, 255, 255, 0.95);
+            /* Semi-transparent white */
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            padding: 30px 40px;
+            width: 100%;
+            max-width: 500px;
+            animation: fadeIn 0.6s ease-in-out;
+            backdrop-filter: blur(10px);
+        }
 
-/* Form Styling */
-form {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
 
-label {
-    font-weight: 600;
-    color: #007bff;
-}
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
 
-input {
-    padding: 12px;
-    border: 1px solid #007bff;
-    border-radius: 8px;
-    font-size: 1rem;
-    color: #333;
-    transition: all 0.3s ease;
-    background-color: #f0f8ff;
-}
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #007bff;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
 
-input:focus {
-    border-color: #0056b3;
-    box-shadow: 0 0 8px rgba(0, 123, 255, 0.5);
-    outline: none;
-}
+        /* Form Styling */
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
 
-/* Password Container */
-.password-container {
-    position: relative;
-}
+        label {
+            font-weight: 600;
+            color: #007bff;
+        }
 
-.password-container input {
-    width: 100%;
-}
+        input {
+            padding: 12px;
+            border: 1px solid #007bff;
+            border-radius: 8px;
+            font-size: 1rem;
+            color: #333;
+            transition: all 0.3s ease;
+            background-color: #f0f8ff;
+        }
 
-.toggle-password {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    cursor: pointer;
-    font-size: 1.3rem;
-    color: #555;
-    transition: color 0.3s ease;
-}
+        input:focus {
+            border-color: #0056b3;
+            box-shadow: 0 0 8px rgba(0, 123, 255, 0.5);
+            outline: none;
+        }
 
-.toggle-password:hover {
-    color: #007bff;
-}
+        /* Password Container */
+        .password-container {
+            position: relative;
+        }
 
-/* Button */
-button {
-    background: linear-gradient(to right, #0056b3, #007bff);
-    color: white;
-    border: none;
-    padding: 12px;
-    border-radius: 8px;
-    font-size: 1.1rem;
-    font-weight: 600;
-    cursor: pointer;
-    text-transform: uppercase;
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-    transition: all 0.3s ease;
-}
+        .password-container input {
+            width: 100%;
+        }
 
-button:hover {
-    background: #0056b3;
-    transform: translateY(-3px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
-}
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 1.3rem;
+            color: #555;
+            transition: color 0.3s ease;
+        }
 
-/* Popup Message */
-.popup {
-    text-align: center;
-    padding: 10px;
-    margin-bottom: 20px;
-    border-radius: 8px;
-    color: white;
-    font-weight: 600;
-}
+        .toggle-password:hover {
+            color: #007bff;
+        }
 
-.popup.error {
-    background-color: #dc3545;
-}
+        /* Button */
+        button {
+            background: linear-gradient(to right, #0056b3, #007bff);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-transform: uppercase;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
 
-.popup.success {
-    background-color: #28a745;
-}
+        button:hover {
+            background: #0056b3;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+        }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-    .auth-container {
-        padding: 20px;
-    }
+        /* Popup Message */
+        .popup {
+            text-align: center;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+        }
 
-    h1 {
-        font-size: 2rem;
-    }
+        .popup.error {
+            background-color: #dc3545;
+        }
 
-    button {
-        padding: 10px;
-    }
-}
+        .popup.success {
+            background-color: #28a745;
+        }
 
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .auth-container {
+                padding: 20px;
+            }
 
-  </style>
+            h1 {
+                font-size: 2rem;
+            }
+
+            button {
+                padding: 10px;
+            }
+        }
+    </style>
 </head>
 
 <body>
-  <div class="auth-container">
-    <h1>Daftar Akun</h1>
+    <div class="auth-container">
+        <h1>Daftar Akun</h1>
 
-    <% if (locals.message) { %>
-      <div id="popup" class="popup <%= locals.alertType === 'error' ? 'error' : '' %>">
-        <%= message %>
-      </div>
-      <% } %>
+        <% if (locals.message) { %>
+            <div id="popup" class="popup <%= locals.alertType === 'error' ? 'error' : '' %>">
+                <%= message %>
+            </div>
+            <% } %>
 
-        <form action="/signup" method="POST" onsubmit="return validateForm()">
-          <label for="namaUser">Nama Lengkap:</label>
-          <input type="text" id="namaUser" name="namaUser" placeholder="Masukkan nama lengkap"
-            value="<%= locals.formData && formData.namaUser ? formData.namaUser : '' %>" required>
+                <form action="/signup" method="POST" onsubmit="return validateForm()">
+                    <label for="namaUser">Nama Lengkap:</label>
+                    <input type="text" id="namaUser" name="namaUser" placeholder="Masukkan nama lengkap"
+                        value="<%= locals.formData && formData.namaUser ? formData.namaUser : '' %>" required>
 
-          <label for="email">Email:</label>
-          <input type="email" id="email" name="email" placeholder="Masukkan email"
-            value="<%= locals.formData && formData.email ? formData.email : '' %>" required>
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" placeholder="Masukkan email"
+                        value="<%= locals.formData && formData.email ? formData.email : '' %>" required>
 
-          <label for="password">Password:</label>
-          <div class="password-container">
-            <input type="password" id="password" name="password" placeholder="Buat password" required minlength="6">
-            <span class="toggle-password" id="togglePassword1"
-              onclick="togglePassword('password', 'togglePassword1')">🗨️</span>
-          </div>
+                    <label for="password">Password:</label>
+                    <div class="password-container">
+                        <input type="password" id="password" name="password" placeholder="Buat password" required
+                            minlength="6">
+                        <span class="toggle-password" id="togglePassword1"
+                            onclick="togglePassword('password', 'togglePassword1')">🗨️</span>
+                    </div>
 
-          <label for="confirmPassword">Konfirmasi Password:</label>
-          <div class="password-container">
-            <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Ulangi password" required>
-            <span class="toggle-password" id="togglePassword2"
-              onclick="togglePassword('confirmPassword', 'togglePassword2')">🗨️</span>
-          </div>
+                    <label for="confirmPassword">Konfirmasi Password:</label>
+                    <div class="password-container">
+                        <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Ulangi password"
+                            required>
+                        <span class="toggle-password" id="togglePassword2"
+                            onclick="togglePassword('confirmPassword', 'togglePassword2')">🗨️</span>
+                    </div>
 
-          <label for="tanggalLahir">Tanggal Lahir:</label>
-          <input type="date" id="tanggalLahir" name="tanggalLahir"
-            value="<%= locals.formData && formData.tanggalLahir ? formData.tanggalLahir : '' %>" required>
+                    <label for="tanggalLahir">Tanggal Lahir:</label>
+                    <input type="date" id="tanggalLahir" name="tanggalLahir"
+                        value="<%= locals.formData && formData.tanggalLahir ? formData.tanggalLahir : '' %>" required>
 
-          <label for="alamat">Alamat:</label>
-          <input type="text" id="alamat" name="alamat" placeholder="Masukkan alamat"
-            value="<%= locals.formData && formData.alamat ? formData.alamat : '' %>" required>
+                    <label for="alamat">Alamat:</label>
+                    <input type="text" id="alamat" name="alamat" placeholder="Masukkan alamat"
+                        value="<%= locals.formData && formData.alamat ? formData.alamat : '' %>" required>
 
-          <label for="nomorTelepon">Nomor Telepon:</label>
-          <input type="tel" id="nomorTelepon" name="nomorTelepon" placeholder="Masukkan nomor telepon"
-            value="<%= locals.formData && formData.nomorTelepon ? formData.nomorTelepon : '' %>" required
-            pattern="[0-9]+">
+                    <label for="nomorTelepon">Nomor Telepon:</label>
+                    <input type="tel" id="nomorTelepon" name="nomorTelepon" placeholder="Masukkan nomor telepon"
+                        value="<%= locals.formData && formData.nomorTelepon ? formData.nomorTelepon : '' %>" required
+                        pattern="[0-9]+">
 
-          <button type="submit">Daftar</button>
-        </form>
+                    <button type="submit">Daftar</button>
+                </form>
 
-        <script>
-          function togglePassword(inputId, iconId) {
-            const input = document.getElementById(inputId);
-            const icon = document.getElementById(iconId);
+                <script>
+                    function togglePassword(inputId, iconId) {
+                        const input = document.getElementById(inputId);
+                        const icon = document.getElementById(iconId);
 
-            if (input.type === "password") {
-              input.type = "text";
-              icon.textContent = "👁️";
-            } else {
-              input.type = "password";
-              icon.textContent = "🗨️";
-            }
-          }
+                        if (input.type === "password") {
+                            input.type = "text";
+                            icon.textContent = "👁️";
+                        } else {
+                            input.type = "password";
+                            icon.textContent = "🗨️";
+                        }
+                    }
 
-          function validateForm() {
-            const password = document.getElementById('password');
-            const confirmPassword = document.getElementById('confirmPassword');
-            const passwordError = document.getElementById('passwordError');
+                    function validateForm() {
+                        const password = document.getElementById('password');
+                        const confirmPassword = document.getElementById('confirmPassword');
+                        const passwordError = document.getElementById('passwordError');
 
-            // Reset error message
-            passwordError.textContent = '';
+                        // Reset error message
+                        passwordError.textContent = '';
 
-            // Cek panjang password
-            if (password.value.length < 6) {
-              passwordError.textContent = 'Password minimal 6 karakter';
-              return false;
-            }
+                        // Cek panjang password
+                        if (password.value.length < 6) {
+                            passwordError.textContent = 'Password minimal 6 karakter';
+                            return false;
+                        }
 
-            // Cek kesesuaian password
-            if (password.value !== confirmPassword.value) {
-              passwordError.textContent = 'Password tidak cocok';
-              return false;
-            }
+                        // Cek kesesuaian password
+                        if (password.value !== confirmPassword.value) {
+                            passwordError.textContent = 'Password tidak cocok';
+                            return false;
+                        }
 
-            return true;
-          }
-        </script>
+                        return true;
+                    }
+                </script>
 </body>
 
 </html>
